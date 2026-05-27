@@ -151,6 +151,62 @@ all_qs |>
                    add_median_line = TRUE) + 
   ggtitle("")
 
+# use gglikert() for a question which spans all 4 phases
+all_qs |> 
+  filter(question_code == "relevant_times_importance") |> 
+  select(-question_code) |> 
+  pivot_wider(names_from = "phase",
+              values_from = "response") |> 
+  mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = likert_importance))) |> 
+  gglikert(include = starts_with("T", ignore.case = F),
+           facet_rows = vars(group)) + 
+  ggtitle("")
 
+# compare effectiveness of elements - supporting pupils to wash hands at relevant times/contexts
+elements_context <- t3_teachers |> 
+  pivot_wider(names_from = "question_code",
+              values_from = "response") |> 
+  select(participant, element_handwashing_song:element_stickers) |> 
+  filter(participant == 1) |> 
+  pivot_longer(cols = element_handwashing_song:element_stickers,
+               names_to = "question_code",
+               values_to = "response") |> 
+  pull(question_code)
+  
+all_qs |> 
+  filter(question_code %in% elements_context,
+         group == "Teachers/TAs",
+         phase == "T3") |> 
+  select(-phase, -group, -full_question) |> 
+    pivot_wider(names_from = "question_code",
+              values_from = "response") |> 
+  mutate(across(element_handwashing_song:element_stickers, ~ factor(.x, levels = likert_effectiveness))) |> 
+  select(-participant, -likert_scale) |> 
+  gglikert(sort = "descending") + 
+  scale_fill_brewer(palette = "YlGnBu") +
+  ggtitle("In your opinion, how effective were the following elements \nof the project in supporting pupils to wash their hands \nduring the relevant times and contexts?")
 
+# compare effectiveness of elements - supporting pupils to follow handwashing steps
+elements_steps <- t3_teachers |> 
+  pivot_wider(names_from = "question_code",
+              values_from = "response") |> 
+  select(participant, element_steps_handwashing_song:element_steps_stickers) |> 
+  filter(participant == 1) |> 
+  pivot_longer(cols = element_steps_handwashing_song:element_steps_stickers,
+               names_to = "question_code",
+               values_to = "response") |> 
+  pull(question_code)
 
+all_qs |> 
+  filter(question_code %in% elements_steps,
+         group == "Teachers/TAs",
+         phase == "T3") |> 
+  select(-phase, -group, -full_question) |> 
+  pivot_wider(names_from = "question_code",
+              values_from = "response") |> 
+  mutate(across(element_steps_handwashing_song:element_steps_stickers, ~ factor(.x, levels = likert_effectiveness))) |> 
+  select(-participant, -likert_scale) |> 
+  gglikert_stacked(sort = "descending",
+           sort_method = "mean") + 
+  scale_fill_brewer(palette = "YlGnBu") +
+  ggtitle("In your opinion, how effective were the following elements \nof the project in supporting pupils to wash their hands \nduring the relevant times and contexts?")
