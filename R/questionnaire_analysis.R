@@ -1,6 +1,7 @@
 library(tidyverse)
 library(readxl)
 library(ggstats)
+library(labelled)
 
 # set up likert scales
 likert_importance <- c("Not At All Important",
@@ -27,7 +28,7 @@ likert_frequency <- c("Not At All",
                       "Most Of The Time",
                       "Every Time")
 
-likert_effectiveness <- c("Not Effective At All",
+likert_effectiveness <- c("Not At All Effective",
                           "Slightly Effective",
                           "Moderately Effective",
                           "Effective",
@@ -172,8 +173,21 @@ elements_context <- t3_teachers |>
                names_to = "question_code",
                values_to = "response") |> 
   pull(question_code)
+
+elements_context_labels <- all_qs |> 
+  filter(question_code %in% elements_context,
+         group == "Teachers/TAs",
+         phase == "T3") |> 
+  filter(participant == 1) |> 
+  select(full_question) |> 
+  separate_wider_delim(full_question,
+                       delim = "?",
+                       names = c("full_question_1", "full_question_2")) |> 
+  select(full_question_2) |> 
+  mutate(full_question_2 = str_trim(full_question_2)) |> 
+  pull(full_question_2)
   
-all_qs |> 
+elements_context_data <- all_qs |> 
   filter(question_code %in% elements_context,
          group == "Teachers/TAs",
          phase == "T3") |> 
@@ -181,8 +195,13 @@ all_qs |>
     pivot_wider(names_from = "question_code",
               values_from = "response") |> 
   mutate(across(element_handwashing_song:element_stickers, ~ factor(.x, levels = likert_effectiveness))) |> 
-  select(-participant, -likert_scale) |> 
-  gglikert(sort = "descending") + 
+  select(-participant, -likert_scale)
+
+var_label(elements_context_data) <- elements_context_labels
+  
+elements_context_data |> 
+  gglikert_stacked(sort = "descending",
+                   sort_method = "mean") + 
   scale_fill_brewer(palette = "YlGnBu") +
   ggtitle("In your opinion, how effective were the following elements \nof the project in supporting pupils to wash their hands \nduring the relevant times and contexts?")
 
@@ -197,7 +216,20 @@ elements_steps <- t3_teachers |>
                values_to = "response") |> 
   pull(question_code)
 
-all_qs |> 
+elements_steps_labels <- all_qs |> 
+  filter(question_code %in% elements_steps,
+         group == "Teachers/TAs",
+         phase == "T3") |> 
+  filter(participant == 1) |> 
+  select(full_question) |> 
+  separate_wider_delim(full_question,
+                       delim = "?",
+                       names = c("full_question_1", "full_question_2")) |> 
+  select(full_question_2) |> 
+  mutate(full_question_2 = str_trim(full_question_2)) |> 
+  pull(full_question_2)
+
+elements_steps_data <- all_qs |> 
   filter(question_code %in% elements_steps,
          group == "Teachers/TAs",
          phase == "T3") |> 
@@ -205,8 +237,31 @@ all_qs |>
   pivot_wider(names_from = "question_code",
               values_from = "response") |> 
   mutate(across(element_steps_handwashing_song:element_steps_stickers, ~ factor(.x, levels = likert_effectiveness))) |> 
-  select(-participant, -likert_scale) |> 
+  select(-participant, -likert_scale)
+
+var_label(elements_steps_data) <- elements_steps_labels
+  
+elements_steps_data |> 
   gglikert_stacked(sort = "descending",
-           sort_method = "mean") + 
+                   sort_method = "mean") + 
   scale_fill_brewer(palette = "YlGnBu") +
-  ggtitle("In your opinion, how effective were the following elements \nof the project in supporting pupils to wash their hands \nduring the relevant times and contexts?")
+  ggtitle("In your opinion, how effective were the following elements \nof the project in supporting pupils to wash their hands \nfollowing the NHS recommended handwashing steps?")
+
+
+all_qs |> 
+  filter(question_code %in% elements_steps,
+         group == "Teachers/TAs",
+         phase == "T3") |> 
+  separate_wider_delim(full_question,
+                       delim = "?",
+                       names = c("full_question_1", "element")) |>
+  mutate(element = str_trim(element)) |> 
+  group_by(element) |> 
+  count(response) |> 
+  mutate(total = sum(n),
+         pct = n/total*100,
+         text = paste0(pct, "% (", n, ")")) |> 
+  select(-n, -total, - pct) |> 
+  pivot_wider(names_from = "response",
+              values_from = "text")
+  
