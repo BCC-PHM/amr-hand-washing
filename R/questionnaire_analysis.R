@@ -138,7 +138,8 @@ all_qs |>
   mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = likert_knowledge))) |> 
   gglikert(include = starts_with("T", ignore.case = F),
            facet_rows = vars(group)) + 
-  ggtitle("")
+  ggtitle("How would you rate your current knowledge of the relationship between AMR and handwashing?") +
+  scale_fill_brewer(palette = "YlGnBu")
 
 # try out gglikert_stacked()
 all_qs |> 
@@ -150,7 +151,8 @@ all_qs |>
   mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = likert_knowledge))) |> 
   gglikert_stacked(include = starts_with("T", ignore.case = F),
                    add_median_line = TRUE) + 
-  ggtitle("")
+  ggtitle("How would you rate your current knowledge of the relationship between \nAMR and handwashing?") +
+  scale_fill_brewer(palette = "YlGnBu")
 
 # use gglikert() for a question which spans all 4 phases
 all_qs |> 
@@ -161,15 +163,16 @@ all_qs |>
   mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = likert_importance))) |> 
   gglikert(include = starts_with("T", ignore.case = F),
            facet_rows = vars(group)) + 
-  ggtitle("")
+  scale_fill_brewer(palette = "YlGnBu") +
+  ggtitle("To what extent do you think it's important for pupils to be washing their hands \nat the relevant times/ contexts within the school day?")
 
 # compare effectiveness of elements - supporting pupils to wash hands at relevant times/contexts
 elements_context <- t3_teachers |> 
   pivot_wider(names_from = "question_code",
               values_from = "response") |> 
-  select(participant, element_handwashing_song:element_stickers) |> 
+  select(participant, element_time_handwashing_song:element_time_stickers) |> 
   filter(participant == 1) |> 
-  pivot_longer(cols = element_handwashing_song:element_stickers,
+  pivot_longer(cols = element_time_handwashing_song:element_time_stickers,
                names_to = "question_code",
                values_to = "response") |> 
   pull(question_code)
@@ -194,16 +197,16 @@ elements_context_data <- all_qs |>
   select(-phase, -group, -full_question) |> 
     pivot_wider(names_from = "question_code",
               values_from = "response") |> 
-  mutate(across(element_handwashing_song:element_stickers, ~ factor(.x, levels = likert_effectiveness))) |> 
+  mutate(across(element_time_handwashing_song:element_time_stickers, ~ factor(.x, levels = likert_effectiveness))) |> 
   select(-participant, -likert_scale)
 
 var_label(elements_context_data) <- elements_context_labels
   
 elements_context_data |> 
   gglikert_stacked(sort = "descending",
-                   sort_method = "mean") + 
+                   sort_method = "median") + 
   scale_fill_brewer(palette = "YlGnBu") +
-  ggtitle("In your opinion, how effective were the following elements \nof the project in supporting pupils to wash their hands \nduring the relevant times and contexts?")
+  ggtitle("In your opinion, how effective were the following elements of the project in \nsupporting pupils to wash their hands during the relevant times and contexts?")
 
 # compare effectiveness of elements - supporting pupils to follow handwashing steps
 elements_steps <- t3_teachers |> 
@@ -233,7 +236,7 @@ elements_steps_data <- all_qs |>
   filter(question_code %in% elements_steps,
          group == "Teachers/TAs",
          phase == "T3") |> 
-  select(-phase, -group, -full_question) |> 
+  select(-phase, -group, -full_question, -likert_scale) |> 
   pivot_wider(names_from = "question_code",
               values_from = "response") |> 
   mutate(across(element_steps_handwashing_song:element_steps_stickers, ~ factor(.x, levels = likert_effectiveness))) |> 
@@ -243,7 +246,7 @@ var_label(elements_steps_data) <- elements_steps_labels
   
 elements_steps_data |> 
   gglikert_stacked(sort = "descending",
-                   sort_method = "mean") + 
+                   sort_method = "median") + 
   scale_fill_brewer(palette = "YlGnBu") +
   ggtitle("In your opinion, how effective were the following elements \nof the project in supporting pupils to wash their hands \nfollowing the NHS recommended handwashing steps?")
 
@@ -264,4 +267,45 @@ all_qs |>
   select(-n, -total, - pct) |> 
   pivot_wider(names_from = "response",
               values_from = "text")
+
+
+# compare frequency of observing each step within a phase
+
+freq_steps <- t3_teachers |> 
+  pivot_wider(names_from = "question_code",
+              values_from = "response") |> 
+  select(participant, freq_step_1:freq_step_9) |> 
+  filter(participant == 1) |> 
+  pivot_longer(cols = freq_step_1:freq_step_9,
+               names_to = "question_code",
+               values_to = "response") |> 
+  pull(question_code)
+
+all_qs |> 
+  filter(question_code %in% freq_steps,
+         phase == "T2") |> 
+  separate_wider_delim(full_question,
+                       delim = "?",
+                       names = c("question", "step")) |> 
+  mutate(step = str_trim(step)) |> 
+  select(-phase, -group, -question_code) |> 
+  pivot_wider(names_from = "step",
+              values_from = "response") |>
+  select(-question, -participant, -likert_scale) |> 
+  mutate(across(everything(), ~ factor(.x, levels = likert_frequency))) |>
+  gglikert() + 
+  scale_fill_brewer(palette = "YlGnBu")
   
+# compare frequency of observing a step between phases
+all_qs |> 
+  filter(question_code == "freq_step_4") |> 
+  separate_wider_delim(full_question,
+                       delim = "?",
+                       names = c("question", "step")) |> 
+  mutate(step = str_trim(step)) |> 
+  pivot_wider(names_from = "phase",
+              values_from = "response") |>
+  select(starts_with("T")) |> 
+  mutate(across(everything(), ~ factor(.x, levels = likert_frequency))) |>
+  gglikert() + 
+  scale_fill_brewer(palette = "YlGnBu")
