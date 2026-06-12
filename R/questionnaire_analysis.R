@@ -136,6 +136,7 @@ all_qs |>
   pivot_wider(names_from = "phase",
               values_from = "response") |> 
   mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = likert_knowledge))) |> 
+  select(-participant, -full_question, -likert_scale)
   gglikert(include = starts_with("T", ignore.case = F),
            facet_rows = vars(group)) + 
   ggtitle("How would you rate your current knowledge of the relationship between AMR and handwashing?") +
@@ -281,7 +282,7 @@ freq_steps <- t3_teachers |>
                values_to = "response") |> 
   pull(question_code)
 
-all_qs |> 
+t2_steps_freq_plot <- all_qs |> 
   filter(question_code %in% freq_steps,
          phase == "T2") |> 
   separate_wider_delim(full_question,
@@ -293,8 +294,35 @@ all_qs |>
               values_from = "response") |>
   select(-question, -participant, -likert_scale) |> 
   mutate(across(everything(), ~ factor(.x, levels = likert_frequency))) |>
+  gglikert(totals_include_center = TRUE) + 
+  scale_fill_brewer(palette = "YlGnBu") +
+  ggtitle("Within these contexts, overall how often do pupils in your class do the following NHS recommended handwashing steps?")
+
+t3_steps_freq_plot <- all_qs |> 
+  filter(question_code %in% freq_steps,
+         phase == "T3") |> 
+  separate_wider_delim(full_question,
+                       delim = "?",
+                       names = c("question", "step")) |> 
+  mutate(step = str_trim(step)) |> 
+  select(-phase, -group, -question_code) |> 
+  pivot_wider(names_from = "step",
+              values_from = "response") |>
+  select(-question, -participant, -likert_scale) |> 
+  mutate(across(everything(), ~ factor(.x, levels = likert_frequency))) |>
   gglikert() + 
-  scale_fill_brewer(palette = "YlGnBu")
+  scale_fill_brewer(palette = "YlGnBu") +
+  ggtitle("")
+
+cowplot::plot_grid(t2_steps_freq_plot,
+                   t3_steps_freq_plot,
+                   labels = c("Pre-intervention (T2)", "Post-intervention (T3)"),
+                   ncol = 2,
+                   align = "h")
+
+library(patchwork)
+
+t2_steps_freq_plot | t3_steps_freq_plot
   
 # compare frequency of observing a step between phases
 all_qs |> 
@@ -308,4 +336,5 @@ all_qs |>
   select(starts_with("T")) |> 
   mutate(across(everything(), ~ factor(.x, levels = likert_frequency))) |>
   gglikert() + 
-  scale_fill_brewer(palette = "YlGnBu")
+  scale_fill_brewer(palette = "YlGnBu") +
+  ggtitle("Within these contexts, overall how often do pupils in your class do the following\nNHS recommended handwashing steps? Step 4: Rub The Inside Of Your Fingers")
