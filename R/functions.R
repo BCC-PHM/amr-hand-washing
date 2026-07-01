@@ -44,7 +44,7 @@ get_labels <- function(.starts_with, .compare = c("within phase", "between phase
   labels
 }
 
-get_labels(.starts_with = "freq_step", .compare = "within phase")
+get_labels(.starts_with = "element_time", .compare = "within phase")
 get_labels(.starts_with = "handwashing_steps_importance", .compare = "between phases")
 
 get_title <- function(.starts_with, .compare = c("within phase", "between phases")){
@@ -72,7 +72,7 @@ get_title <- function(.starts_with, .compare = c("within phase", "between phases
   title[1]
 }
 
-get_title("element_reminder", "within phase")
+get_title("freq_step", "within phase")
 get_title("handwashing_steps_importance", "between phases")
 
 get_likert_scale <- function(.starts_with){
@@ -167,26 +167,26 @@ plot_likert <- function(.phase, .group, .starts_with, .compare = c("within phase
       select(-question_code) |> 
       pivot_wider(names_from = "phase",
                   values_from = "response") |> 
-      mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = likert_scale))) |>
-      select(-participant, -full_question, -likert_scale)
+      mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = likert_scale))) #|>
+      # select(-participant, -full_question, -likert_scale)
 
-    labels <- c("group", labels)
-
-    var_label(data) <- labels
-
-    if(.order == "question order"){
-      plot <- data |>
-        gglikert(include = starts_with("T", ignore.case = F),
-                         facet_rows = vars(group)) +
-        scale_fill_brewer(palette = "YlGnBu") +
-        ggtitle(title)
-    } else if(.order == "score"){
-      plot <- data |>
-        gglikert(include = starts_with("T", ignore.case = F),
-                         facet_rows = vars(group)) +
-        scale_fill_brewer(palette = "YlGnBu") +
-        ggtitle(title)
-    }
+    # labels <- c("group", labels)
+    # 
+    # var_label(data) <- labels
+    # 
+    # if(.order == "question order"){
+    #   plot <- data |>
+    #     gglikert(include = starts_with("T", ignore.case = F),
+    #                      facet_rows = vars(group)) +
+    #     scale_fill_brewer(palette = "YlGnBu") +
+    #     ggtitle(title)
+    # } else if(.order == "score"){
+    #   plot <- data |>
+    #     gglikert(include = starts_with("T", ignore.case = F),
+    #                      facet_rows = vars(group)) +
+    #     scale_fill_brewer(palette = "YlGnBu") +
+    #     ggtitle(title)
+    # }
   }
   data
 }
