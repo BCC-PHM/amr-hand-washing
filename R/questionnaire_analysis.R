@@ -627,6 +627,7 @@ elements_data |>
 
 ref <- "freq_step"
 
+# compare steps, facet by phase
 elements_data <- all_qs |> 
   filter(question_code %in% get_codes(ref),
          group == "Teachers/TAs") |> 
@@ -637,7 +638,7 @@ elements_data <- all_qs |>
   mutate(across(starts_with(ref), ~ factor(.x, levels = get_likert_scale(ref))))
 
 
-var_label(elements_data) <- c("phase" ,get_labels(.starts_with = ref, .compare = "within phase"))
+var_label(elements_data) <- c("phase", get_labels(.starts_with = ref, .compare = "within phase"))
 
 p1 <- elements_data |> 
   filter(phase == "T2") |> 
@@ -673,6 +674,27 @@ p1 + p2 + p3 +
               axes = "collect") +
   plot_annotation(title = str_wrap(get_title(ref, "within phase"), 80)) &
   custom_theming
+
+# compare single step between phases
+
+step <- "3"
+
+all_qs |> 
+  filter(question_code %in% paste0("freq_step_", step),
+         group == "Teachers/TAs") |> 
+  select(-group, -full_question) |> 
+  pivot_wider(names_from = "phase",
+              values_from = "response") |> 
+  select(-participant, -likert_scale, -question_code) |> 
+  mutate(across(starts_with("T"), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
+  set_variable_labels(T2 = "Post-webinar",
+                      T3 = "Post-reinforcement",
+                      T4 = "Follow up") |> 
+  gglikert_stacked(labels_accuracy = 0.1) +
+  scale_fill_brewer(palette = "YlGnBu") +
+  custom_theming +
+  ggtitle(str_wrap(get_title(.starts_with = paste0("freq_step_", step),
+                             .compare = "between phases"), 80))
 
 # Pupil behaviour - handwashing contexts -------------------------------------
 
