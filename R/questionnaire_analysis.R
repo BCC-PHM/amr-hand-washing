@@ -2,6 +2,10 @@ library(tidyverse)
 library(readxl)
 library(ggstats)
 library(labelled)
+library(patchwork)
+
+# Data import -------------------------------------------------------------
+
 
 # set up likert scales
 likert_importance <- c("Not At All Important",
@@ -129,127 +133,732 @@ all_qs <- left_join(all_qs,
                     q_code_lookup,
                     by = "question_code")
 
-# try out gglikert() using faceting
+
+# Plots -------------------------------------------------------------------
+
+
+# set up var_label list for time points
+timepoint_labels <- list(
+  participant = NULL,
+  group = NULL,
+  full_question = NULL,
+  likert_scale = NULL,
+  T1 = "Pre-webinar",
+  T2 = "Post-webinar",
+  T3 = "Post-reinforcement",
+  T4 = "Follow up"
+)
+
+# define custom theme
+custom_theming <- theme(legend.position = "bottom",
+                        strip.background = element_rect(fill = "black"),
+                        strip.text = element_text(colour = "white"),
+                        text = element_text(size = 12),
+                        plot.title = element_text(face="bold", size = 16))
+
+
+# Knowledge of AMR --------------------------------------------------------
+ref <- "amr_knowledge"
+
+# gglikert() with faceting
 all_qs |> 
-  filter(question_code == "amr_handwashing") |> 
+  filter(question_code %in% get_codes(ref)) |> 
   select(-question_code) |> 
   pivot_wider(names_from = "phase",
               values_from = "response") |> 
-  mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = likert_knowledge))) |> 
-  select(-participant, -full_question, -likert_scale)
+  mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
+  select(-participant, -full_question, -likert_scale) |> 
+  set_variable_labels(T1 = "Pre-webinar",
+                      T2 = "Post-webinar") |> 
   gglikert(include = starts_with("T", ignore.case = F),
-           facet_rows = vars(group)) + 
-  ggtitle("How would you rate your current knowledge of the relationship between AMR and handwashing?") +
-  scale_fill_brewer(palette = "YlGnBu")
+           facet_rows = vars(group),
+           labels_accuracy = 0.1) + 
+  ggtitle(str_wrap(get_title(ref, "between phases"), 80)) +
+  scale_fill_brewer(palette = "YlGnBu") +
+  custom_theming
 
-# try out gglikert_stacked()
-all_qs |> 
-  filter(question_code == "amr_handwashing",
+# gglikert_stacked() with faux faceting
+
+p1 <- all_qs |> 
+  filter(question_code %in% get_codes(ref),
+         group == "Headteachers") |> 
+  select(-question_code) |> 
+  pivot_wider(names_from = "phase",
+              values_from = "response") |> 
+  mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
+  set_variable_labels(T1 = "Pre-webinar",
+                      T2 = "Post-webinar") |> 
+  gglikert_stacked(include = starts_with("T", ignore.case = F),
+                   labels_accuracy = 0.1) + 
+  scale_fill_brewer(palette = "YlGnBu") +
+  facet_wrap(~group,
+             strip.position = "right")
+
+p2 <- all_qs |> 
+  filter(question_code %in% get_codes(ref),
          group == "Teachers/TAs") |> 
   select(-question_code) |> 
   pivot_wider(names_from = "phase",
               values_from = "response") |> 
-  mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = likert_knowledge))) |> 
+  mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
+  set_variable_labels(T1 = "Pre-webinar",
+                      T2 = "Post-webinar") |> 
   gglikert_stacked(include = starts_with("T", ignore.case = F),
-                   add_median_line = TRUE) + 
-  ggtitle("How would you rate your current knowledge of the relationship between \nAMR and handwashing?") +
-  scale_fill_brewer(palette = "YlGnBu")
+                   labels_accuracy = 0.1) + 
+  scale_fill_brewer(palette = "YlGnBu") +
+  facet_wrap(~group,
+             strip.position = "right")
 
-# use gglikert() for a question which spans all 4 phases
+p1 / p2 +
+  plot_layout(guides = "collect",
+              axes = "collect") +
+  plot_annotation(title = str_wrap(get_title(ref, "between phases"), 80)) &
+  custom_theming
+
+# AMR and handwashing -----------------------------------------------------
+
+ref <- "amr_handwashing"
+
+# gglikert() with faceting
 all_qs |> 
-  filter(question_code == "relevant_times_importance") |> 
+  filter(question_code %in% get_codes(ref)) |> 
   select(-question_code) |> 
   pivot_wider(names_from = "phase",
               values_from = "response") |> 
-  mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = likert_importance))) |> 
+  mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
+  select(-participant, -full_question, -likert_scale) |> 
+  set_variable_labels(T1 = "Pre-webinar",
+                      T2 = "Post-webinar") |> 
   gglikert(include = starts_with("T", ignore.case = F),
-           facet_rows = vars(group)) + 
+           facet_rows = vars(group),
+           labels_accuracy = 0.1) + 
+  ggtitle(str_wrap(get_title(ref, "between phases"), 80)) +
   scale_fill_brewer(palette = "YlGnBu") +
-  ggtitle("To what extent do you think it's important for pupils to be washing their hands \nat the relevant times/ contexts within the school day?")
+  custom_theming
 
-# compare effectiveness of elements - supporting pupils to wash hands at relevant times/contexts
-elements_context <- t3_teachers |> 
-  pivot_wider(names_from = "question_code",
+# gglikert_stacked() with faux faceting
+
+p1 <- all_qs |> 
+  filter(question_code %in% get_codes(ref),
+         group == "Headteachers") |> 
+  select(-question_code) |> 
+  pivot_wider(names_from = "phase",
               values_from = "response") |> 
-  select(participant, element_time_handwashing_song:element_time_stickers) |> 
-  filter(participant == 1) |> 
-  pivot_longer(cols = element_time_handwashing_song:element_time_stickers,
-               names_to = "question_code",
-               values_to = "response") |> 
-  pull(question_code)
+  mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
+  set_variable_labels(T1 = "Pre-webinar",
+                      T2 = "Post-webinar") |> 
+  gglikert_stacked(include = starts_with("T", ignore.case = F),
+                   labels_accuracy = 0.1) + 
+  scale_fill_brewer(palette = "YlGnBu") +
+  facet_wrap(~group,
+             strip.position = "right")
 
-elements_context_labels <- all_qs |> 
-  filter(question_code %in% elements_context,
-         group == "Teachers/TAs",
-         phase == "T3") |> 
-  filter(participant == 1) |> 
-  select(full_question) |> 
-  separate_wider_delim(full_question,
-                       delim = "?",
-                       names = c("full_question_1", "full_question_2")) |> 
-  select(full_question_2) |> 
-  mutate(full_question_2 = str_trim(full_question_2)) |> 
-  pull(full_question_2)
-  
-elements_context_data <- all_qs |> 
-  filter(question_code %in% elements_context,
+p2 <- all_qs |> 
+  filter(question_code %in% get_codes(ref),
+         group == "Teachers/TAs") |> 
+  select(-question_code) |> 
+  pivot_wider(names_from = "phase",
+              values_from = "response") |> 
+  mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
+  set_variable_labels(T1 = "Pre-webinar",
+                      T2 = "Post-webinar") |> 
+  gglikert_stacked(include = starts_with("T", ignore.case = F),
+                   labels_accuracy = 0.1) + 
+  scale_fill_brewer(palette = "YlGnBu") +
+  facet_wrap(~group,
+             strip.position = "right")
+
+p1 / p2 +
+  plot_layout(guides = "collect",
+              axes = "collect") +
+  plot_annotation(title = str_wrap(get_title(ref, "between phases"), 80)) &
+  custom_theming
+
+
+# Understanding of NHS handwashing steps  ---------------------------------
+
+ref <- "handwashing_steps_understanding"
+
+# gglikert() with faceting
+all_qs |> 
+  filter(question_code %in% get_codes(ref)) |> 
+  select(-question_code) |> 
+  pivot_wider(names_from = "phase",
+              values_from = "response") |> 
+  mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
+  select(-participant, -full_question, -likert_scale) |> 
+  set_variable_labels(T1 = "Pre-webinar",
+                      T2 = "Post-webinar") |> 
+  gglikert(include = starts_with("T", ignore.case = F),
+           facet_rows = vars(group),
+           labels_accuracy = 0.1) + 
+  ggtitle(str_wrap(get_title(ref, "between phases"), 80)) +
+  scale_fill_brewer(palette = "YlGnBu") +
+  custom_theming
+
+# gglikert_stacked() with faux faceting
+
+p1 <- all_qs |> 
+  filter(question_code %in% get_codes(ref),
+         group == "Headteachers") |> 
+  select(-question_code) |> 
+  pivot_wider(names_from = "phase",
+              values_from = "response") |> 
+  mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
+  set_variable_labels(T1 = "Pre-webinar",
+                      T2 = "Post-webinar") |> 
+  gglikert_stacked(include = starts_with("T", ignore.case = F),
+                   labels_accuracy = 0.1) + 
+  scale_fill_brewer(palette = "YlGnBu") +
+  facet_wrap(~group,
+             strip.position = "right")
+
+p2 <- all_qs |> 
+  filter(question_code %in% get_codes(ref),
+         group == "Teachers/TAs") |> 
+  select(-question_code) |> 
+  pivot_wider(names_from = "phase",
+              values_from = "response") |> 
+  mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
+  set_variable_labels(T1 = "Pre-webinar",
+                      T2 = "Post-webinar") |> 
+  gglikert_stacked(include = starts_with("T", ignore.case = F),
+                   labels_accuracy = 0.1) + 
+  scale_fill_brewer(palette = "YlGnBu") +
+  facet_wrap(~group,
+             strip.position = "right")
+
+p1 / p2 +
+  plot_layout(guides = "collect",
+              axes = "collect") +
+  plot_annotation(title = str_wrap(get_title(ref, "between phases"), 80)) &
+  custom_theming
+
+# Perceived important of children washing hands using NHS steps -----------
+
+ref <- "handwashing_steps_importance"
+
+# gglikert() with faceting
+all_qs |> 
+  filter(question_code %in% get_codes(ref)) |> 
+  select(-question_code) |> 
+  pivot_wider(names_from = "phase",
+              values_from = "response") |> 
+  mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
+  select(-participant, -full_question, -likert_scale) |> 
+  set_variable_labels(T1 = "Pre-webinar",
+                      T2 = "Post-webinar",
+                      T3 = "Post-reinforcement",
+                      T4 = "Follow up") |> 
+  gglikert(include = starts_with("T", ignore.case = F),
+           facet_rows = vars(group),
+           labels_accuracy = 0.1) + 
+  ggtitle(str_wrap(get_title(ref, "between phases"), 80)) +
+  scale_fill_brewer(palette = "YlGnBu") +
+  custom_theming
+
+# gglikert_stacked() with faux faceting
+
+p1 <- all_qs |> 
+  filter(question_code %in% get_codes(ref),
+         group == "Headteachers") |> 
+  select(-question_code) |> 
+  pivot_wider(names_from = "phase",
+              values_from = "response") |> 
+  mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
+  set_variable_labels(T1 = "Pre-webinar",
+                      T2 = "Post-webinar",
+                      T3 = "Post-reinforcement",
+                      T4 = "Follow up") |> 
+  gglikert_stacked(include = starts_with("T", ignore.case = F),
+                   labels_accuracy = 0.1) + 
+  scale_fill_brewer(palette = "YlGnBu") +
+  facet_wrap(~group,
+             strip.position = "right")
+
+p2 <- all_qs |> 
+  filter(question_code %in% get_codes(ref),
+         group == "Teachers/TAs") |> 
+  select(-question_code) |> 
+  pivot_wider(names_from = "phase",
+              values_from = "response") |> 
+  mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
+  set_variable_labels(T1 = "Pre-webinar",
+                      T2 = "Post-webinar",
+                      T3 = "Post-reinforcement",
+                      T4 = "Follow up") |> 
+  gglikert_stacked(include = starts_with("T", ignore.case = F),
+                   labels_accuracy = 0.1) + 
+  scale_fill_brewer(palette = "YlGnBu") +
+  facet_wrap(~group,
+             strip.position = "right")
+
+p1 / p2 +
+  plot_layout(guides = "collect",
+              axes = "collect") +
+  plot_annotation(title = str_wrap(get_title(ref, "between phases"), 80)) &
+  custom_theming
+
+# Understanding of relevant handwashing context/times  ---------------------------------
+
+ref <- "relevant_times_understanding"
+
+# gglikert() with faceting
+all_qs |> 
+  filter(question_code %in% get_codes(ref)) |> 
+  select(-question_code) |> 
+  pivot_wider(names_from = "phase",
+              values_from = "response") |> 
+  mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
+  select(-participant, -full_question, -likert_scale) |> 
+  set_variable_labels(T1 = "Pre-webinar",
+                      T2 = "Post-webinar") |> 
+  gglikert(include = starts_with("T", ignore.case = F),
+           facet_rows = vars(group),
+           labels_accuracy = 0.1) + 
+  ggtitle(str_wrap(get_title(ref, "between phases"), 80)) +
+  scale_fill_brewer(palette = "YlGnBu") +
+  custom_theming
+
+# gglikert_stacked() with faux faceting
+
+p1 <- all_qs |> 
+  filter(question_code %in% get_codes(ref),
+         group == "Headteachers") |> 
+  select(-question_code) |> 
+  pivot_wider(names_from = "phase",
+              values_from = "response") |> 
+  mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
+  set_variable_labels(T1 = "Pre-webinar",
+                      T2 = "Post-webinar") |> 
+  gglikert_stacked(include = starts_with("T", ignore.case = F),
+                   labels_accuracy = 0.1) + 
+  scale_fill_brewer(palette = "YlGnBu") +
+  facet_wrap(~group,
+             strip.position = "right")
+
+p2 <- all_qs |> 
+  filter(question_code %in% get_codes(ref),
+         group == "Teachers/TAs") |> 
+  select(-question_code) |> 
+  pivot_wider(names_from = "phase",
+              values_from = "response") |> 
+  mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
+  set_variable_labels(T1 = "Pre-webinar",
+                      T2 = "Post-webinar") |> 
+  gglikert_stacked(include = starts_with("T", ignore.case = F),
+                   labels_accuracy = 0.1) + 
+  scale_fill_brewer(palette = "YlGnBu") +
+  facet_wrap(~group,
+             strip.position = "right")
+
+p1 / p2 +
+  plot_layout(guides = "collect",
+              axes = "collect") +
+  plot_annotation(title = str_wrap(get_title(ref, "between phases"), 80)) &
+  custom_theming
+
+# Perceived important of children washing hands at relevant times/ --------
+
+ref <- "relevant_times_importance"
+
+# gglikert() with faceting
+all_qs |> 
+  filter(question_code %in% get_codes(ref)) |> 
+  select(-question_code) |> 
+  pivot_wider(names_from = "phase",
+              values_from = "response") |> 
+  mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
+  select(-participant, -full_question, -likert_scale) |> 
+  set_variable_labels(T1 = "Pre-webinar",
+                      T2 = "Post-webinar",
+                      T3 = "Post-reinforcement",
+                      T4 = "Follow up") |> 
+  gglikert(include = starts_with("T", ignore.case = F),
+           facet_rows = vars(group),
+           labels_accuracy = 0.1) + 
+  ggtitle(str_wrap(get_title(ref, "between phases"), 80)) +
+  scale_fill_brewer(palette = "YlGnBu") +
+  custom_theming
+
+# gglikert_stacked() with faux faceting
+
+p1 <- all_qs |> 
+  filter(question_code %in% get_codes(ref),
+         group == "Headteachers") |> 
+  select(-question_code) |> 
+  pivot_wider(names_from = "phase",
+              values_from = "response") |> 
+  mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
+  set_variable_labels(T1 = "Pre-webinar",
+                      T2 = "Post-webinar",
+                      T3 = "Post-reinforcement",
+                      T4 = "Follow up") |> 
+  gglikert_stacked(include = starts_with("T", ignore.case = F),
+                   labels_accuracy = 0.1) + 
+  scale_fill_brewer(palette = "YlGnBu") +
+  facet_wrap(~group,
+             strip.position = "right")
+
+p2 <- all_qs |> 
+  filter(question_code %in% get_codes(ref),
+         group == "Teachers/TAs") |> 
+  select(-question_code) |> 
+  pivot_wider(names_from = "phase",
+              values_from = "response") |> 
+  mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
+  set_variable_labels(T1 = "Pre-webinar",
+                      T2 = "Post-webinar",
+                      T3 = "Post-reinforcement",
+                      T4 = "Follow up") |> 
+  gglikert_stacked(include = starts_with("T", ignore.case = F),
+                   labels_accuracy = 0.1) + 
+  scale_fill_brewer(palette = "YlGnBu") +
+  facet_wrap(~group,
+             strip.position = "right")
+
+p1 / p2 +
+  plot_layout(guides = "collect",
+              axes = "collect") +
+  plot_annotation(title = str_wrap(get_title(ref, "between phases"), 80)) &
+  custom_theming
+
+# Perceived effectiveness of project elements - relevant times/contexts--------
+
+ref <- "element_time"
+
+elements_data <- all_qs |> 
+  filter(question_code %in% get_codes(ref),
          group == "Teachers/TAs",
          phase == "T3") |> 
   select(-phase, -group, -full_question) |> 
-    pivot_wider(names_from = "question_code",
-              values_from = "response") |> 
-  mutate(across(element_time_handwashing_song:element_time_stickers, ~ factor(.x, levels = likert_effectiveness))) |> 
-  select(-participant, -likert_scale)
-
-var_label(elements_context_data) <- elements_context_labels
-  
-elements_context_data |> 
-  gglikert_stacked(sort = "descending",
-                   sort_method = "median") + 
-  scale_fill_brewer(palette = "YlGnBu") +
-  ggtitle("In your opinion, how effective were the following elements of the project in \nsupporting pupils to wash their hands during the relevant times and contexts?")
-
-# compare effectiveness of elements - supporting pupils to follow handwashing steps
-elements_steps <- t3_teachers |> 
   pivot_wider(names_from = "question_code",
               values_from = "response") |> 
-  select(participant, element_steps_handwashing_song:element_steps_stickers) |> 
-  filter(participant == 1) |> 
-  pivot_longer(cols = element_steps_handwashing_song:element_steps_stickers,
-               names_to = "question_code",
-               values_to = "response") |> 
-  pull(question_code)
+  select(-participant, -likert_scale) |> 
+  mutate(across(everything(), ~ factor(.x, levels = get_likert_scale(ref))))
+  
 
-elements_steps_labels <- all_qs |> 
-  filter(question_code %in% elements_steps,
+var_label(elements_data) <- get_labels(.starts_with = ref, .compare = "within phase")
+  
+elements_data |> 
+  gglikert_stacked(sort = "descending",
+                   sort_method = "median",
+                   labels_accuracy = 0.1) + 
+  ggtitle(str_wrap(get_title(ref, "within phase"), 80)) +
+  scale_fill_brewer(palette = "YlGnBu") +
+  custom_theming
+
+# Perceived effectiveness of project elements - handwashing steps --------
+
+ref <- "element_steps"
+
+elements_data <- all_qs |> 
+  filter(question_code %in% get_codes(ref),
          group == "Teachers/TAs",
          phase == "T3") |> 
-  filter(participant == 1) |> 
-  select(full_question) |> 
-  separate_wider_delim(full_question,
-                       delim = "?",
-                       names = c("full_question_1", "full_question_2")) |> 
-  select(full_question_2) |> 
-  mutate(full_question_2 = str_trim(full_question_2)) |> 
-  pull(full_question_2)
-
-elements_steps_data <- all_qs |> 
-  filter(question_code %in% elements_steps,
-         group == "Teachers/TAs",
-         phase == "T3") |> 
-  select(-phase, -group, -full_question, -likert_scale) |> 
+  select(-phase, -group, -full_question) |> 
   pivot_wider(names_from = "question_code",
               values_from = "response") |> 
-  mutate(across(element_steps_handwashing_song:element_steps_stickers, ~ factor(.x, levels = likert_effectiveness))) |> 
-  select(-participant, -likert_scale)
+  select(-participant, -likert_scale) |> 
+  mutate(across(everything(), ~ factor(.x, levels = get_likert_scale(ref))))
 
-var_label(elements_steps_data) <- elements_steps_labels
-  
-elements_steps_data |> 
+
+var_label(elements_data) <- get_labels(.starts_with = ref, .compare = "within phase")
+
+elements_data |> 
   gglikert_stacked(sort = "descending",
-                   sort_method = "median") + 
+                   sort_method = "median",
+                   labels_accuracy = 0.1) + 
+  ggtitle(str_wrap(get_title(ref, "within phase"), 80)) +
   scale_fill_brewer(palette = "YlGnBu") +
-  ggtitle("In your opinion, how effective were the following elements \nof the project in supporting pupils to wash their hands \nfollowing the NHS recommended handwashing steps?")
+  custom_theming
+
+# Perceived effectiveness of project elements - remind and prompt --------
+
+ref <- "element_reminder"
+
+elements_data <- all_qs |> 
+  filter(question_code %in% get_codes(ref),
+         group == "Teachers/TAs",
+         phase == "T3") |> 
+  select(-phase, -group, -full_question) |> 
+  pivot_wider(names_from = "question_code",
+              values_from = "response") |> 
+  select(-participant, -likert_scale) |> 
+  mutate(across(everything(), ~ factor(.x, levels = get_likert_scale(ref))))
+
+
+var_label(elements_data) <- get_labels(.starts_with = ref, .compare = "within phase")
+
+elements_data |> 
+  gglikert_stacked(sort = "descending",
+                   sort_method = "median",
+                   labels_accuracy = 0.1) + 
+  ggtitle(str_wrap(get_title(ref, "within phase"), 80)) +
+  scale_fill_brewer(palette = "YlGnBu") +
+  custom_theming
+
+# Perceived effectiveness of project elements - headteachers --------
+
+ref <- "element_ht"
+
+elements_data <- all_qs |> 
+  filter(question_code %in% get_codes(ref),
+         group == "Headteachers",
+         phase == "T3") |> 
+  select(-phase, -group, -full_question) |> 
+  pivot_wider(names_from = "question_code",
+              values_from = "response") |> 
+  select(-participant, -likert_scale) |> 
+  mutate(across(everything(), ~ factor(.x, levels = get_likert_scale(ref))))
+
+
+var_label(elements_data) <- get_labels(.starts_with = ref, .compare = "within phase")
+
+elements_data |> 
+  gglikert_stacked(sort = "descending",
+                   sort_method = "median",
+                   labels_accuracy = 0.1) + 
+  ggtitle(str_wrap(get_title(ref, "within phase"), 80)) +
+  scale_fill_brewer(palette = "YlGnBu") +
+  custom_theming
+
+# Pupil behaviour - handwashing steps -------------------------------------
+
+ref <- "freq_step"
+
+elements_data <- all_qs |> 
+  filter(question_code %in% get_codes(ref),
+         group == "Teachers/TAs") |> 
+  select(-group, -full_question) |> 
+  pivot_wider(names_from = "question_code",
+              values_from = "response") |> 
+  select(-participant, -likert_scale) |> 
+  mutate(across(starts_with(ref), ~ factor(.x, levels = get_likert_scale(ref))))
+
+
+var_label(elements_data) <- c("phase" ,get_labels(.starts_with = ref, .compare = "within phase"))
+
+p1 <- elements_data |> 
+  filter(phase == "T2") |> 
+  mutate(phase = "Post-webinar") |> 
+  gglikert_stacked(include = starts_with(ref),
+                   sort = "none",
+                   labels_accuracy = 0.1) + 
+  scale_fill_brewer(palette = "YlGnBu") +
+  facet_wrap(~phase,
+             strip.position = "top")
+
+p2 <- elements_data |> 
+  filter(phase == "T3") |> 
+  mutate(phase = "Post-reinforcement") |> 
+  gglikert_stacked(include = starts_with(ref),
+                   sort = "none",
+                   labels_accuracy = 0.1) + 
+  scale_fill_brewer(palette = "YlGnBu") +
+  facet_wrap(~phase,
+             strip.position = "top")
+
+p3 <- elements_data |> 
+  filter(phase == "T4") |> 
+  mutate(phase = "Follow up") |> 
+  gglikert_stacked(include = starts_with(ref),
+                   labels_accuracy = 0.1) + 
+  scale_fill_brewer(palette = "YlGnBu") +
+  facet_wrap(~phase,
+             strip.position = "top")
+
+p1 + p2 + p3 +
+  plot_layout(guides = "collect",
+              axes = "collect") +
+  plot_annotation(title = str_wrap(get_title(ref, "within phase"), 80)) &
+  custom_theming
+
+# Pupil behaviour - handwashing contexts -------------------------------------
+
+ref <- "freq_context"
+
+# compare contexts, facet by phase (staggered)
+all_qs |> 
+  filter(question_code %in% get_codes(ref),
+         group == "Teachers/TAs") |> 
+  select(-group, -full_question) |> 
+  pivot_wider(names_from = "question_code",
+              values_from = "response") |> 
+  select(-participant, -likert_scale) |> 
+  mutate(across(starts_with(ref), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
+  set_variable_labels(freq_context_before_lunch = "Before Lunch",
+                      freq_context_after_toilet = "After Going To The Toilet",
+                      freq_context_after_play = "After Outside Play") |> 
+  mutate(phase = case_when(phase == "T2" ~ "Post-webinar",
+                           phase == "T3" ~ "Post-reinforcement",
+                           phase == "T4" ~ "Follow up")) |> 
+  gglikert(include = starts_with(ref, ignore.case = F),
+           facet_cols = vars(phase),
+           labels_accuracy = 0.1) + 
+  ggtitle(str_wrap(get_title(ref, "within phase"), 80)) +
+  scale_fill_brewer(palette = "YlGnBu") +
+  custom_theming
+
+# compare contexts, facet by phase (stacked)
+elements_data <- all_qs |> 
+  filter(question_code %in% get_codes(ref),
+         group == "Teachers/TAs") |> 
+  select(-group, -full_question) |> 
+  pivot_wider(names_from = "question_code",
+              values_from = "response") |> 
+  select(-participant, -likert_scale) |> 
+  mutate(across(starts_with(ref), ~ factor(.x, levels = get_likert_scale(ref))))
+
+
+var_label(elements_data) <- c("phase" ,get_labels(.starts_with = ref, .compare = "within phase"))
+
+p1 <- elements_data |> 
+  filter(phase == "T2") |> 
+  mutate(phase = "Post-webinar") |> 
+  gglikert_stacked(include = starts_with(ref),
+                   sort = "none",
+                   labels_accuracy = 0.1) + 
+  scale_fill_brewer(palette = "YlGnBu") +
+  facet_wrap(~phase,
+             strip.position = "top")
+
+p2 <- elements_data |> 
+  filter(phase == "T3") |> 
+  mutate(phase = "Post-reinforcement") |> 
+  gglikert_stacked(include = starts_with(ref),
+                   sort = "none",
+                   labels_accuracy = 0.1) + 
+  scale_fill_brewer(palette = "YlGnBu") +
+  facet_wrap(~phase,
+             strip.position = "top")
+
+p3 <- elements_data |> 
+  filter(phase == "T4") |> 
+  mutate(phase = "Follow up") |> 
+  gglikert_stacked(include = starts_with(ref),
+                   labels_accuracy = 0.1) + 
+  scale_fill_brewer(palette = "YlGnBu") +
+  facet_wrap(~phase,
+             strip.position = "top")
+
+p1 + p2 + p3 +
+  plot_layout(guides = "collect",
+              axes = "collect") +
+  plot_annotation(title = str_wrap(get_title(ref, "within phase"), 80)) &
+  custom_theming
+
+# compare phases, facet by context (staggered)
+all_qs |> 
+  filter(question_code %in% get_codes(ref),
+         group == "Teachers/TAs") |> 
+  select(-group, -full_question) |> 
+  pivot_wider(names_from = "phase",
+              values_from = "response") |> 
+  select(-participant, -likert_scale) |> 
+  mutate(across(starts_with("T"), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
+  set_variable_labels(T2 = "Post-webinar",
+                      T3 = "Post-reinforcement",
+                      T4 = "Follow up") |> 
+  mutate(question_code = case_when(question_code == "freq_context_before_lunch" ~ "Before Lunch",
+                                   question_code == "freq_context_after_toilet" ~ "After Going To The Toilet",
+                                   question_code == "freq_context_after_play" ~ "After Outside Play")) |> 
+  gglikert(include = starts_with("T", ignore.case = F),
+           facet_cols = vars(question_code),
+           labels_accuracy = 0.1) + 
+  ggtitle(str_wrap(get_title(ref, "within phase"), 80)) +
+  scale_fill_brewer(palette = "YlGnBu") +
+  custom_theming
+
+# compare phases, facet by context (stacked)
+elements_data <- all_qs |> 
+  filter(question_code %in% get_codes(ref),
+         group == "Teachers/TAs") |> 
+  select(-group, -full_question) |> 
+  pivot_wider(names_from = "phase",
+              values_from = "response") |> 
+  select(-participant, -likert_scale) |> 
+  mutate(across(starts_with("T"), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
+  set_variable_labels(T2 = "Post-webinar",
+                      T3 = "Post-reinforcement",
+                      T4 = "Follow up")
+
+p1 <- elements_data |> 
+  filter(question_code == "freq_context_before_lunch") |> 
+  mutate(question_code = "Before Lunch") |> 
+  gglikert_stacked(include = starts_with("T"),
+                   sort = "none",
+                   labels_accuracy = 0.1) + 
+  scale_fill_brewer(palette = "YlGnBu") +
+  facet_wrap(~question_code,
+             strip.position = "top")
+
+p2 <- elements_data |> 
+  filter(question_code == "freq_context_after_toilet") |> 
+  mutate(question_code = "After Going To The Toilet") |> 
+  gglikert_stacked(include = starts_with("T"),
+                   sort = "none",
+                   labels_accuracy = 0.1) + 
+  scale_fill_brewer(palette = "YlGnBu") +
+  facet_wrap(~question_code,
+             strip.position = "top")
+
+p3 <- elements_data |> 
+  filter(question_code == "freq_context_after_play") |> 
+  mutate(question_code = "After Outside Play") |> 
+  gglikert_stacked(include = starts_with("T"),
+                   sort = "none",
+                   labels_accuracy = 0.1) + 
+  scale_fill_brewer(palette = "YlGnBu") +
+  facet_wrap(~question_code,
+             strip.position = "top")
+
+p1 + p2 + p3 +
+  plot_layout(guides = "collect",
+              axes = "collect") +
+  plot_annotation(title = str_wrap(get_title(ref, "within phase"), 80)) &
+  custom_theming
+
+
+# Extent to which project met expectations  ------------------------------
+
+ref <- "expectations_met"
+
+# gglikert() with faceting
+all_qs |> 
+  filter(question_code %in% get_codes(ref)) |> 
+  select(-question_code) |> 
+  pivot_wider(names_from = "group",
+              values_from = "response") |> 
+  mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
+  select(-participant, -full_question, -likert_scale) |> 
+  #set_variable_labels(T3 = "Post-reinforcement") |> 
+  gglikert(include = `Teachers/TAs`:Headteachers,
+           #facet_rows = vars(group),
+           labels_accuracy = 0.1) + 
+  ggtitle(str_wrap(get_title(ref, "between phases"), 80)) +
+  scale_fill_brewer(palette = "YlGnBu") +
+  custom_theming
+
+# gglikert_stacked()
+all_qs |> 
+  filter(question_code %in% get_codes(ref)) |> 
+  select(-question_code) |> 
+  pivot_wider(names_from = "group",
+              values_from = "response") |> 
+  mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
+  select(-participant, -full_question, -likert_scale) |> 
+  #set_variable_labels(T3 = "Post-reinforcement") |> 
+  gglikert_stacked(include = `Teachers/TAs`:Headteachers,
+           #facet_rows = vars(group),
+           labels_accuracy = 0.1) + 
+  ggtitle(str_wrap(get_title(ref, "between phases"), 80)) +
+  scale_fill_brewer(palette = "YlGnBu") +
+  custom_theming
+
+
+# Other -------------------------------------------------------------------
+
 
 
 all_qs |> 
@@ -319,8 +928,6 @@ cowplot::plot_grid(t2_steps_freq_plot,
                    labels = c("Pre-intervention (T2)", "Post-intervention (T3)"),
                    ncol = 2,
                    align = "h")
-
-library(patchwork)
 
 t2_steps_freq_plot | t3_steps_freq_plot
   
