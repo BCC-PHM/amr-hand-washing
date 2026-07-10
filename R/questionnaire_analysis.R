@@ -154,8 +154,15 @@ custom_theming <- theme(legend.position = "bottom",
                         strip.background = element_rect(fill = "black"),
                         strip.text = element_text(colour = "white"),
                         text = element_text(size = 12),
-                        plot.title = element_text(face="bold", size = 16))
+                        plot.title = element_text(face="bold", size = 16),
+                        plot.title.position = "plot")
 
+count_lookup <- all_qs |> 
+  distinct(participant, group,phase) |> 
+  group_by(group, phase) |> 
+  count() |> 
+  mutate(label_group = paste0(group, " (n=", n, ")"),
+         label_phase = paste0(phase, " (n=", n, ")"))
 
 # Knowledge of AMR --------------------------------------------------------
 ref <- "amr_knowledge"
@@ -531,22 +538,25 @@ elements_data <- all_qs |>
   filter(question_code %in% get_codes(ref),
          group == "Teachers/TAs",
          phase == "T3") |> 
-  select(-phase, -group, -full_question) |> 
+  select(-phase, -full_question) |> 
   pivot_wider(names_from = "question_code",
               values_from = "response") |> 
   select(-participant, -likert_scale) |> 
-  mutate(across(everything(), ~ factor(.x, levels = get_likert_scale(ref))))
+  mutate(across(starts_with("element"), ~ factor(.x, levels = get_likert_scale(ref))))
   
 
-var_label(elements_data) <- get_labels(.starts_with = ref, .compare = "within phase")
+var_label(elements_data) <- c("group", get_labels(.starts_with = ref, .compare = "within phase"))
   
 elements_data |> 
-  gglikert_stacked(sort = "descending",
+  gglikert_stacked(include = starts_with("element"),
+                   sort = "descending",
                    sort_method = "median",
                    labels_accuracy = 0.1) + 
   ggtitle(str_wrap(get_title(ref, "within phase"), 80)) +
   scale_fill_brewer(palette = "YlGnBu") +
-  custom_theming
+  custom_theming +
+  facet_wrap(~group,
+             strip.position = "right")
 
 # Perceived effectiveness of project elements - handwashing steps --------
 
@@ -556,22 +566,25 @@ elements_data <- all_qs |>
   filter(question_code %in% get_codes(ref),
          group == "Teachers/TAs",
          phase == "T3") |> 
-  select(-phase, -group, -full_question) |> 
+  select(-phase, -full_question) |> 
   pivot_wider(names_from = "question_code",
               values_from = "response") |> 
   select(-participant, -likert_scale) |> 
-  mutate(across(everything(), ~ factor(.x, levels = get_likert_scale(ref))))
+  mutate(across(starts_with("element"), ~ factor(.x, levels = get_likert_scale(ref))))
 
 
-var_label(elements_data) <- get_labels(.starts_with = ref, .compare = "within phase")
+var_label(elements_data) <- c("group",get_labels(.starts_with = ref, .compare = "within phase"))
 
 elements_data |> 
-  gglikert_stacked(sort = "descending",
+  gglikert_stacked(include = starts_with("element"),
+                   sort = "descending",
                    sort_method = "median",
                    labels_accuracy = 0.1) + 
   ggtitle(str_wrap(get_title(ref, "within phase"), 80)) +
   scale_fill_brewer(palette = "YlGnBu") +
-  custom_theming
+  custom_theming +
+  facet_wrap(~group,
+             strip.position = "right")
 
 # Perceived effectiveness of project elements - remind and prompt --------
 
@@ -581,22 +594,25 @@ elements_data <- all_qs |>
   filter(question_code %in% get_codes(ref),
          group == "Teachers/TAs",
          phase == "T3") |> 
-  select(-phase, -group, -full_question) |> 
+  select(-phase, -full_question) |> 
   pivot_wider(names_from = "question_code",
               values_from = "response") |> 
   select(-participant, -likert_scale) |> 
-  mutate(across(everything(), ~ factor(.x, levels = get_likert_scale(ref))))
+  mutate(across(starts_with("element"), ~ factor(.x, levels = get_likert_scale(ref))))
 
 
-var_label(elements_data) <- get_labels(.starts_with = ref, .compare = "within phase")
+var_label(elements_data) <- c("group",get_labels(.starts_with = ref, .compare = "within phase"))
 
 elements_data |> 
-  gglikert_stacked(sort = "descending",
+  gglikert_stacked(include = starts_with("element"),
+                   sort = "descending",
                    sort_method = "median",
                    labels_accuracy = 0.1) + 
   ggtitle(str_wrap(get_title(ref, "within phase"), 80)) +
   scale_fill_brewer(palette = "YlGnBu") +
-  custom_theming
+  custom_theming +
+  facet_wrap(~group,
+             strip.position = "right")
 
 # Perceived effectiveness of project elements - headteachers --------
 
@@ -606,22 +622,25 @@ elements_data <- all_qs |>
   filter(question_code %in% get_codes(ref),
          group == "Headteachers",
          phase == "T3") |> 
-  select(-phase, -group, -full_question) |> 
+  select(-phase, -full_question) |> 
   pivot_wider(names_from = "question_code",
               values_from = "response") |> 
   select(-participant, -likert_scale) |> 
-  mutate(across(everything(), ~ factor(.x, levels = get_likert_scale(ref))))
+  mutate(across(starts_with("element"), ~ factor(.x, levels = get_likert_scale(ref))))
 
 
-var_label(elements_data) <- get_labels(.starts_with = ref, .compare = "within phase")
+var_label(elements_data) <- c("group",get_labels(.starts_with = ref, .compare = "within phase"))
 
 elements_data |> 
-  gglikert_stacked(sort = "descending",
+  gglikert_stacked(include = starts_with("element"),
+                   sort = "descending",
                    sort_method = "median",
                    labels_accuracy = 0.1) + 
   ggtitle(str_wrap(get_title(ref, "within phase"), 80)) +
   scale_fill_brewer(palette = "YlGnBu") +
-  custom_theming
+  custom_theming +
+  facet_wrap(~group,
+             strip.position = "right")
 
 # Pupil behaviour - handwashing steps -------------------------------------
 
