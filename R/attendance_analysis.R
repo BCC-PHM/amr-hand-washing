@@ -1,4 +1,5 @@
 library(tidyverse)
+library(PHEindicatormethods)
 
 # import attendance data up to 28th June
 attendance <- read.csv("data/Reception Attendance by School - 202526 YTD.csv") |> 
@@ -44,7 +45,36 @@ attendance <- left_join(attendance,
                         by = join_by("academic_term" == "term"))
 
 
-# Calculate person-days missed --------------------------------------------
+# Calculate person-days and person-days missed --------------------------------------------
 
 attendance <- attendance |> 
-  mutate(days_missed = overall_absence_rate / 100 * no_pupils * days)
+  mutate(person_days = no_pupils * days,
+         person_days_missed = overall_absence_rate / 100 * no_pupils * days)
+
+
+# Aggregate treatment groups ----------------------------------------------
+
+attendance_agg <- attendance |> 
+  group_by(treatment, academic_term) |> 
+  summarise(person_days = sum(person_days),
+            person_days_missed = sum(person_days_missed))
+
+# calculate rate
+attendance_agg <- attendance_agg |> 
+  group_by(treatment, academic_term) |> 
+  phe_rate(x = person_days_missed,
+           n = person_days,
+           multiplier = 1000)
+
+ggplot(attendance_agg) +
+  geom_col(aes(x = academic_term,
+               y = value,
+               fill = treatment,
+               group = treatment),
+           position = "dodge") +
+  geom_errorbar(aes(x = academic_term,
+                    ymin = lowercl,
+                    ymax = uppercl,
+                    group = treatment),
+                width = .2,
+                position = position_dodge(0.9))
