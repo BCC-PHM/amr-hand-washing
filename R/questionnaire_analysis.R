@@ -164,6 +164,8 @@ count_lookup <- all_qs |>
   mutate(label_group = paste0(group, " (n=", n, ")"),
          label_phase = paste0(phase, " (n=", n, ")"))
 
+
+
 # Knowledge of AMR --------------------------------------------------------
 ref <- "amr_knowledge"
 
@@ -193,25 +195,27 @@ p1 <- all_qs |>
   pivot_wider(names_from = "phase",
               values_from = "response") |> 
   mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
-  set_variable_labels(T1 = "Pre-webinar",
-                      T2 = "Post-webinar") |> 
+  set_variable_labels(T1 = "Pre-webinar\n(n=6)",
+                      T2 = "Post-webinar\n(n=6)") |> 
   gglikert_stacked(include = starts_with("T", ignore.case = F),
-                   labels_accuracy = 0.1) + 
+                   labels_accuracy = 0.1,
+                   y_label_wrap = 12) + 
   scale_fill_brewer(palette = "YlGnBu") +
   facet_wrap(~group,
              strip.position = "right")
 
 p2 <- all_qs |> 
   filter(question_code %in% get_codes(ref),
-         group == "Teachers/TAs") |> 
+         group == "Teachers/TAs") |>
   select(-question_code) |> 
   pivot_wider(names_from = "phase",
               values_from = "response") |> 
   mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
-  set_variable_labels(T1 = "Pre-webinar",
-                      T2 = "Post-webinar") |> 
+  set_variable_labels(T1 = "Pre-webinar\n(n=15)",
+                      T2 = "Post-webinar\n(n=10)") |> 
   gglikert_stacked(include = starts_with("T", ignore.case = F),
-                   labels_accuracy = 0.1) + 
+                   labels_accuracy = 0.1,
+                   y_label_wrap = 12) + 
   scale_fill_brewer(palette = "YlGnBu") +
   facet_wrap(~group,
              strip.position = "right")
@@ -221,6 +225,25 @@ p1 / p2 +
               axes = "collect") +
   plot_annotation(title = str_wrap(get_title(ref, "between phases"), 80)) &
   custom_theming
+
+# table
+all_qs |> 
+  filter(question_code %in% get_codes(ref)) |> 
+  group_by(group, phase, response) |> 
+  count() |> 
+  group_by(group, phase) |> 
+  mutate(total = sum(n),
+         pct = n/total*100,
+         text = paste0(round(pct, 1), "% (", n, ")")) |> 
+  select(-n, -pct, -total) |> 
+  pivot_wider(names_from =  "response",
+              values_from = "text") |> 
+  mutate(phase = case_when(phase == "T1" ~ "Pre-webinar",
+                           phase == "T2" ~ "Post-webinar",
+                           phase == "T3" ~ "Post-reinforcement",
+                           phase == "T4" ~ "Follow up")) |> 
+  select(group, phase, `No Knowledge`, `Low Knowledge`, `Moderate Knowledge`, `Good Knowledge`, `Very Good Knowledge`) |> 
+  arrange(group)
 
 # AMR and handwashing -----------------------------------------------------
 
@@ -252,10 +275,11 @@ p1 <- all_qs |>
   pivot_wider(names_from = "phase",
               values_from = "response") |> 
   mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
-  set_variable_labels(T1 = "Pre-webinar",
-                      T2 = "Post-webinar") |> 
+  set_variable_labels(T1 = "Pre-webinar\n(n=6)",
+                      T2 = "Post-webinar\n(n=6)") |> 
   gglikert_stacked(include = starts_with("T", ignore.case = F),
-                   labels_accuracy = 0.1) + 
+                   labels_accuracy = 0.1,
+                   y_label_wrap = 12) + 
   scale_fill_brewer(palette = "YlGnBu") +
   facet_wrap(~group,
              strip.position = "right")
@@ -267,10 +291,11 @@ p2 <- all_qs |>
   pivot_wider(names_from = "phase",
               values_from = "response") |> 
   mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
-  set_variable_labels(T1 = "Pre-webinar",
-                      T2 = "Post-webinar") |> 
+  set_variable_labels(T1 = "Pre-webinar\n(n=15)",
+                      T2 = "Post-webinar\n(n=10)") |> 
   gglikert_stacked(include = starts_with("T", ignore.case = F),
-                   labels_accuracy = 0.1) + 
+                   labels_accuracy = 0.1,
+                   y_label_wrap = 12) + 
   scale_fill_brewer(palette = "YlGnBu") +
   facet_wrap(~group,
              strip.position = "right")
@@ -280,6 +305,25 @@ p1 / p2 +
               axes = "collect") +
   plot_annotation(title = str_wrap(get_title(ref, "between phases"), 80)) &
   custom_theming
+
+# table
+all_qs |> 
+  filter(question_code %in% get_codes(ref)) |> 
+  group_by(group, phase, response) |> 
+  count() |> 
+  group_by(group, phase) |> 
+  mutate(total = sum(n),
+         pct = n/total*100,
+         text = paste0(round(pct, 1), "% (", n, ")")) |> 
+  select(-n, -pct, -total) |> 
+  pivot_wider(names_from =  "response",
+              values_from = "text") |> 
+  mutate(phase = case_when(phase == "T1" ~ "Pre-webinar",
+                           phase == "T2" ~ "Post-webinar",
+                           phase == "T3" ~ "Post-reinforcement",
+                           phase == "T4" ~ "Follow up")) |> 
+  select(group, phase, `No Knowledge`, `Low Knowledge`, `Moderate Knowledge`, `Good Knowledge`, `Very Good Knowledge`) |> 
+  arrange(group)
 
 
 # Understanding of NHS handwashing steps  ---------------------------------
@@ -312,10 +356,11 @@ p1 <- all_qs |>
   pivot_wider(names_from = "phase",
               values_from = "response") |> 
   mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
-  set_variable_labels(T1 = "Pre-webinar",
-                      T2 = "Post-webinar") |> 
+  set_variable_labels(T1 = "Pre-webinar\n(n=6)",
+                      T2 = "Post-webinar\n(n=6)") |> 
   gglikert_stacked(include = starts_with("T", ignore.case = F),
-                   labels_accuracy = 0.1) + 
+                   labels_accuracy = 0.1,
+                   y_label_wrap = 12) + 
   scale_fill_brewer(palette = "YlGnBu") +
   facet_wrap(~group,
              strip.position = "right")
@@ -327,10 +372,11 @@ p2 <- all_qs |>
   pivot_wider(names_from = "phase",
               values_from = "response") |> 
   mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
-  set_variable_labels(T1 = "Pre-webinar",
-                      T2 = "Post-webinar") |> 
+  set_variable_labels(T1 = "Pre-webinar\n(n=15)",
+                      T2 = "Post-webinar\n(n=10)") |> 
   gglikert_stacked(include = starts_with("T", ignore.case = F),
-                   labels_accuracy = 0.1) + 
+                   labels_accuracy = 0.1,
+                   y_label_wrap = 12) + 
   scale_fill_brewer(palette = "YlGnBu") +
   facet_wrap(~group,
              strip.position = "right")
@@ -340,6 +386,27 @@ p1 / p2 +
               axes = "collect") +
   plot_annotation(title = str_wrap(get_title(ref, "between phases"), 80)) &
   custom_theming
+
+# table
+all_qs |> 
+  filter(question_code %in% get_codes(ref)) |> 
+  group_by(group, phase, response) |> 
+  count() |> 
+  group_by(group, phase) |> 
+  mutate(total = sum(n),
+         pct = n/total*100,
+         text = paste0(round(pct, 1), "% (", n, ")")) |> 
+  select(-n, -pct, -total) |> 
+  pivot_wider(names_from =  "response",
+              values_from = "text") |> 
+  mutate(phase = case_when(phase == "T1" ~ "Pre-webinar",
+                           phase == "T2" ~ "Post-webinar",
+                           phase == "T3" ~ "Post-reinforcement",
+                           phase == "T4" ~ "Follow up")) |> 
+  mutate(`No Understanding` = NA,
+         `Low Understanding` = NA) |> 
+  select(group, phase, `No Understanding`, `Low Understanding`, `Moderate Understanding`, `Good Understanding`, `Very Good Understanding`) |> 
+  arrange(group)
 
 # Perceived important of children washing hands using NHS steps -----------
 
@@ -373,12 +440,13 @@ p1 <- all_qs |>
   pivot_wider(names_from = "phase",
               values_from = "response") |> 
   mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
-  set_variable_labels(T1 = "Pre-webinar",
-                      T2 = "Post-webinar",
-                      T3 = "Post-reinforcement",
-                      T4 = "Follow up") |> 
+  set_variable_labels(T1 = "Pre-webinar\n(n=6)",
+                      T2 = "Post-webinar\n(n=6)",
+                      T3 = "Post-reinforcement\n(n=5)",
+                      T4 = "Follow up\n(n=2)") |> 
   gglikert_stacked(include = starts_with("T", ignore.case = F),
-                   labels_accuracy = 0.1) + 
+                   labels_accuracy = 0.1,
+                   y_label_wrap = 12) + 
   scale_fill_brewer(palette = "YlGnBu") +
   facet_wrap(~group,
              strip.position = "right")
@@ -390,12 +458,13 @@ p2 <- all_qs |>
   pivot_wider(names_from = "phase",
               values_from = "response") |> 
   mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
-  set_variable_labels(T1 = "Pre-webinar",
-                      T2 = "Post-webinar",
-                      T3 = "Post-reinforcement",
-                      T4 = "Follow up") |> 
+  set_variable_labels(T1 = "Pre-webinar\n(n=15)",
+                      T2 = "Post-webinar\n(n=10)",
+                      T3 = "Post-reinforcement\n(n=8)",
+                      T4 = "Follow up\n(n=6)") |> 
   gglikert_stacked(include = starts_with("T", ignore.case = F),
-                   labels_accuracy = 0.1) + 
+                   labels_accuracy = 0.1,
+                   y_label_wrap = 12) + 
   scale_fill_brewer(palette = "YlGnBu") +
   facet_wrap(~group,
              strip.position = "right")
@@ -405,6 +474,27 @@ p1 / p2 +
               axes = "collect") +
   plot_annotation(title = str_wrap(get_title(ref, "between phases"), 80)) &
   custom_theming
+
+# table
+all_qs |> 
+  filter(question_code %in% get_codes(ref)) |> 
+  group_by(group, phase, response) |> 
+  count() |> 
+  group_by(group, phase) |> 
+  mutate(total = sum(n),
+         pct = n/total*100,
+         text = paste0(round(pct, 1), "% (", n, ")")) |> 
+  select(-n, -pct, -total) |> 
+  pivot_wider(names_from =  "response",
+              values_from = "text") |> 
+  mutate(phase = case_when(phase == "T1" ~ "Pre-webinar",
+                           phase == "T2" ~ "Post-webinar",
+                           phase == "T3" ~ "Post-reinforcement",
+                           phase == "T4" ~ "Follow up")) |> 
+  mutate(`Not At All Important` = NA,
+         `Slightly Important` = NA) |> 
+  select(group, phase, `Not At All Important`, `Slightly Important`, `Moderately Important`, Important, `Very Important`) |> 
+  arrange(group)
 
 # Understanding of relevant handwashing context/times  ---------------------------------
 
@@ -436,10 +526,11 @@ p1 <- all_qs |>
   pivot_wider(names_from = "phase",
               values_from = "response") |> 
   mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
-  set_variable_labels(T1 = "Pre-webinar",
-                      T2 = "Post-webinar") |> 
+  set_variable_labels(T1 = "Pre-webinar\n(n=6)",
+                      T2 = "Post-webinar\n(n=6)") |> 
   gglikert_stacked(include = starts_with("T", ignore.case = F),
-                   labels_accuracy = 0.1) + 
+                   labels_accuracy = 0.1,
+                   y_label_wrap = 12) + 
   scale_fill_brewer(palette = "YlGnBu") +
   facet_wrap(~group,
              strip.position = "right")
@@ -451,10 +542,11 @@ p2 <- all_qs |>
   pivot_wider(names_from = "phase",
               values_from = "response") |> 
   mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
-  set_variable_labels(T1 = "Pre-webinar",
-                      T2 = "Post-webinar") |> 
+  set_variable_labels(T1 = "Pre-webinar\n(n=15)",
+                      T2 = "Post-webinar\n(n=10)") |> 
   gglikert_stacked(include = starts_with("T", ignore.case = F),
-                   labels_accuracy = 0.1) + 
+                   labels_accuracy = 0.1,
+                   y_label_wrap = 12) + 
   scale_fill_brewer(palette = "YlGnBu") +
   facet_wrap(~group,
              strip.position = "right")
@@ -464,6 +556,26 @@ p1 / p2 +
               axes = "collect") +
   plot_annotation(title = str_wrap(get_title(ref, "between phases"), 80)) &
   custom_theming
+
+# table
+all_qs |> 
+  filter(question_code %in% get_codes(ref)) |> 
+  group_by(group, phase, response) |> 
+  count() |> 
+  group_by(group, phase) |> 
+  mutate(total = sum(n),
+         pct = n/total*100,
+         text = paste0(round(pct, 1), "% (", n, ")")) |> 
+  select(-n, -pct, -total) |> 
+  pivot_wider(names_from =  "response",
+              values_from = "text") |> 
+  mutate(phase = case_when(phase == "T1" ~ "Pre-webinar",
+                           phase == "T2" ~ "Post-webinar",
+                           phase == "T3" ~ "Post-reinforcement",
+                           phase == "T4" ~ "Follow up")) |> 
+  mutate(`No Understanding` = NA) |> 
+  select(group, phase, `No Understanding`, `Low Understanding`, `Moderate Understanding`, `Good Understanding`, `Very Good Understanding`) |> 
+  arrange(group)
 
 # Perceived important of children washing hands at relevant times/ --------
 
@@ -483,7 +595,8 @@ all_qs |>
                       T4 = "Follow up") |> 
   gglikert(include = starts_with("T", ignore.case = F),
            facet_rows = vars(group),
-           labels_accuracy = 0.1) + 
+           labels_accuracy = 0.1,
+           y_label_wrap = 12) + 
   ggtitle(str_wrap(get_title(ref, "between phases"), 80)) +
   scale_fill_brewer(palette = "YlGnBu") +
   custom_theming
@@ -497,12 +610,13 @@ p1 <- all_qs |>
   pivot_wider(names_from = "phase",
               values_from = "response") |> 
   mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
-  set_variable_labels(T1 = "Pre-webinar",
-                      T2 = "Post-webinar",
-                      T3 = "Post-reinforcement",
-                      T4 = "Follow up") |> 
+  set_variable_labels(T1 = "Pre-webinar\n(n=6)",
+                      T2 = "Post-webinar\n(n=6)",
+                      T3 = "Post-reinforcement\n(n=5)",
+                      T4 = "Follow up\n(n=2)") |> 
   gglikert_stacked(include = starts_with("T", ignore.case = F),
-                   labels_accuracy = 0.1) + 
+                   labels_accuracy = 0.1,
+                   y_label_wrap = 12) + 
   scale_fill_brewer(palette = "YlGnBu") +
   facet_wrap(~group,
              strip.position = "right")
@@ -514,12 +628,13 @@ p2 <- all_qs |>
   pivot_wider(names_from = "phase",
               values_from = "response") |> 
   mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
-  set_variable_labels(T1 = "Pre-webinar",
-                      T2 = "Post-webinar",
-                      T3 = "Post-reinforcement",
-                      T4 = "Follow up") |> 
+  set_variable_labels(T1 = "Pre-webinar\n(n=15)",
+                      T2 = "Post-webinar\n(n=10)",
+                      T3 = "Post-reinforcement\n(n=8)",
+                      T4 = "Follow up\n(n=6)") |> 
   gglikert_stacked(include = starts_with("T", ignore.case = F),
-                   labels_accuracy = 0.1) + 
+                   labels_accuracy = 0.1,
+                   y_label_wrap = 12) + 
   scale_fill_brewer(palette = "YlGnBu") +
   facet_wrap(~group,
              strip.position = "right")
@@ -530,6 +645,27 @@ p1 / p2 +
   plot_annotation(title = str_wrap(get_title(ref, "between phases"), 80)) &
   custom_theming
 
+all_qs |> 
+  filter(question_code %in% get_codes(ref)) |> 
+  group_by(group, phase, response) |> 
+  count() |> 
+  group_by(group, phase) |> 
+  mutate(total = sum(n),
+         pct = n/total*100,
+         text = paste0(round(pct, 1), "% (", n, ")")) |> 
+  select(-n, -pct, -total) |> 
+  pivot_wider(names_from =  "response",
+              values_from = "text") |> 
+  mutate(phase = case_when(phase == "T1" ~ "Pre-webinar",
+                           phase == "T2" ~ "Post-webinar",
+                           phase == "T3" ~ "Post-reinforcement",
+                           phase == "T4" ~ "Follow up")) |> 
+  mutate(`Not At All Important` = NA,
+         `Slightly Important` = NA,
+         `Moderately Important` = NA) |> 
+  select(group, phase, `Not At All Important`, `Slightly Important`, `Moderately Important`, Important, `Very Important`) |> 
+  arrange(group)
+
 # Perceived effectiveness of project elements - relevant times/contexts--------
 
 ref <- "element_time"
@@ -538,6 +674,7 @@ elements_data <- all_qs |>
   filter(question_code %in% get_codes(ref),
          group == "Teachers/TAs",
          phase == "T3") |> 
+  mutate(group = "Teachers/TAs (n=8)") |> 
   select(-phase, -full_question) |> 
   pivot_wider(names_from = "question_code",
               values_from = "response") |> 
@@ -550,13 +687,38 @@ var_label(elements_data) <- c("group", get_labels(.starts_with = ref, .compare =
 elements_data |> 
   gglikert_stacked(include = starts_with("element"),
                    sort = "descending",
-                   sort_method = "median",
+                   sort_method = "mean",
                    labels_accuracy = 0.1) + 
   ggtitle(str_wrap(get_title(ref, "within phase"), 80)) +
   scale_fill_brewer(palette = "YlGnBu") +
   custom_theming +
   facet_wrap(~group,
              strip.position = "right")
+
+all_qs |> 
+  filter(question_code %in% get_codes(ref)) |> 
+  separate_wider_delim(full_question,
+                       delim = "?",
+                       names = c("full_question_1", "element")) |>
+  mutate(element = str_trim(element)) |> 
+  group_by(element, group, phase) |> 
+  count(response) |> 
+  mutate(total = sum(n),
+         pct = n/total*100,
+         text = paste0(pct, "% (", n, ")"),
+         wt = case_when(response == "Not At All Effective" ~ 1,
+                        response == "Slightly Effective" ~ 2,
+                        response == "Moderately Effective" ~ 3,
+                        response == "Effective" ~ 4,
+                        response == "Very Effective" ~ 5)) |>
+  group_by(element) |> 
+  mutate(mean = mean(n*wt)) |> 
+  arrange(desc(mean)) |> 
+  mutate(element = fct_inorder(element)) |> 
+  select(-n, -total, -pct, -wt, -mean) |> 
+  pivot_wider(names_from = "response",
+              values_from = "text") |> 
+  select(group, phase, element, `Not At All Effective`, `Slightly Effective`, `Moderately Effective`, `Effective`, `Very Effective`)
 
 # Perceived effectiveness of project elements - handwashing steps --------
 
@@ -566,6 +728,7 @@ elements_data <- all_qs |>
   filter(question_code %in% get_codes(ref),
          group == "Teachers/TAs",
          phase == "T3") |> 
+  mutate(group = "Teachers/TAs (n=8)") |>
   select(-phase, -full_question) |> 
   pivot_wider(names_from = "question_code",
               values_from = "response") |> 
@@ -578,13 +741,39 @@ var_label(elements_data) <- c("group",get_labels(.starts_with = ref, .compare = 
 elements_data |> 
   gglikert_stacked(include = starts_with("element"),
                    sort = "descending",
-                   sort_method = "median",
+                   sort_method = "mean",
                    labels_accuracy = 0.1) + 
   ggtitle(str_wrap(get_title(ref, "within phase"), 80)) +
   scale_fill_brewer(palette = "YlGnBu") +
   custom_theming +
   facet_wrap(~group,
              strip.position = "right")
+
+all_qs |> 
+  filter(question_code %in% get_codes(ref)) |> 
+  separate_wider_delim(full_question,
+                       delim = "?",
+                       names = c("full_question_1", "element")) |>
+  mutate(element = str_trim(element)) |> 
+  group_by(element, group, phase) |> 
+  count(response) |> 
+  mutate(total = sum(n),
+         pct = n/total*100,
+         text = paste0(pct, "% (", n, ")"),
+         wt = case_when(response == "Not At All Effective" ~ 1,
+                        response == "Slightly Effective" ~ 2,
+                        response == "Moderately Effective" ~ 3,
+                        response == "Effective" ~ 4,
+                        response == "Very Effective" ~ 5)) |>
+  group_by(element) |> 
+  mutate(mean = mean(n*wt)) |> 
+  arrange(desc(mean)) |> 
+  mutate(element = fct_inorder(element)) |> 
+  select(-n, -total, -pct, -wt, -mean) |> 
+  pivot_wider(names_from = "response",
+              values_from = "text") |> 
+  mutate(`Slightly Effective` = NA) |> 
+  select(group, phase, element, `Not At All Effective`, `Slightly Effective`, `Moderately Effective`, `Effective`, `Very Effective`)
 
 # Perceived effectiveness of project elements - remind and prompt --------
 
@@ -594,6 +783,7 @@ elements_data <- all_qs |>
   filter(question_code %in% get_codes(ref),
          group == "Teachers/TAs",
          phase == "T3") |> 
+  mutate(group = "Teachers/TAs (n=8)") |>
   select(-phase, -full_question) |> 
   pivot_wider(names_from = "question_code",
               values_from = "response") |> 
@@ -606,13 +796,38 @@ var_label(elements_data) <- c("group",get_labels(.starts_with = ref, .compare = 
 elements_data |> 
   gglikert_stacked(include = starts_with("element"),
                    sort = "descending",
-                   sort_method = "median",
+                   sort_method = "mean",
                    labels_accuracy = 0.1) + 
   ggtitle(str_wrap(get_title(ref, "within phase"), 80)) +
   scale_fill_brewer(palette = "YlGnBu") +
   custom_theming +
   facet_wrap(~group,
              strip.position = "right")
+
+all_qs |> 
+  filter(question_code %in% get_codes(ref)) |> 
+  separate_wider_delim(full_question,
+                       delim = "?",
+                       names = c("full_question_1", "element")) |>
+  mutate(element = str_trim(element)) |> 
+  group_by(element, group, phase) |> 
+  count(response) |> 
+  mutate(total = sum(n),
+         pct = n/total*100,
+         text = paste0(pct, "% (", n, ")"),
+         wt = case_when(response == "Not At All Effective" ~ 1,
+                        response == "Slightly Effective" ~ 2,
+                        response == "Moderately Effective" ~ 3,
+                        response == "Effective" ~ 4,
+                        response == "Very Effective" ~ 5)) |>
+  group_by(element) |> 
+  mutate(mean = mean(n*wt)) |> 
+  arrange(desc(mean)) |> 
+  mutate(element = fct_inorder(element)) |> 
+  select(-n, -total, -pct, -wt, -mean) |> 
+  pivot_wider(names_from = "response",
+              values_from = "text") |> 
+  select(group, phase, element, `Not At All Effective`, `Slightly Effective`, `Moderately Effective`, `Effective`, `Very Effective`)
 
 # Perceived effectiveness of project elements - headteachers --------
 
@@ -622,6 +837,7 @@ elements_data <- all_qs |>
   filter(question_code %in% get_codes(ref),
          group == "Headteachers",
          phase == "T3") |> 
+  mutate(group = "Headteachers (n=5)") |>
   select(-phase, -full_question) |> 
   pivot_wider(names_from = "question_code",
               values_from = "response") |> 
@@ -641,6 +857,33 @@ elements_data |>
   custom_theming +
   facet_wrap(~group,
              strip.position = "right")
+
+all_qs |> 
+  filter(question_code %in% get_codes(ref)) |> 
+  separate_wider_delim(full_question,
+                       delim = "?",
+                       names = c("full_question_1", "element")) |>
+  mutate(element = str_trim(element)) |> 
+  group_by(element, group, phase) |> 
+  count(response) |> 
+  mutate(total = sum(n),
+         pct = n/total*100,
+         text = paste0(pct, "% (", n, ")"),
+         wt = case_when(response == "Not At All Effective" ~ 1,
+                        response == "Slightly Effective" ~ 2,
+                        response == "Moderately Effective" ~ 3,
+                        response == "Effective" ~ 4,
+                        response == "Very Effective" ~ 5)) |>
+  group_by(element) |> 
+  mutate(mean = mean(n*wt)) |> 
+  arrange(desc(mean)) |> 
+  mutate(element = fct_inorder(element)) |> 
+  select(-n, -total, -pct, -wt, -mean) |> 
+  pivot_wider(names_from = "response",
+              values_from = "text") |> 
+  mutate(`Not At All Effective` = NA,
+         `Slightly Effective` = NA) |> 
+  select(group, phase, element, `Not At All Effective`, `Slightly Effective`, `Moderately Effective`, `Effective`, `Very Effective`)
 
 # Pupil behaviour - handwashing steps -------------------------------------
 
@@ -661,7 +904,7 @@ var_label(elements_data) <- c("phase", get_labels(.starts_with = ref, .compare =
 
 p1 <- elements_data |> 
   filter(phase == "T2") |> 
-  mutate(phase = "Post-webinar") |> 
+  mutate(phase = "Post-webinar (n=10)") |> 
   gglikert_stacked(include = starts_with(ref),
                    sort = "none",
                    labels_accuracy = 0.1) + 
@@ -671,7 +914,7 @@ p1 <- elements_data |>
 
 p2 <- elements_data |> 
   filter(phase == "T3") |> 
-  mutate(phase = "Post-reinforcement") |> 
+  mutate(phase = "Post-reinforcement (n=8)") |> 
   gglikert_stacked(include = starts_with(ref),
                    sort = "none",
                    labels_accuracy = 0.1) + 
@@ -681,7 +924,7 @@ p2 <- elements_data |>
 
 p3 <- elements_data |> 
   filter(phase == "T4") |> 
-  mutate(phase = "Follow up") |> 
+  mutate(phase = "Follow up (n=6)") |> 
   gglikert_stacked(include = starts_with(ref),
                    labels_accuracy = 0.1) + 
   scale_fill_brewer(palette = "YlGnBu") +
@@ -714,6 +957,29 @@ all_qs |>
   custom_theming +
   ggtitle(str_wrap(get_title(.starts_with = paste0("freq_step_", step),
                              .compare = "between phases"), 80))
+
+all_qs |> 
+  filter(question_code %in% get_codes(ref)) |> 
+  separate_wider_delim(full_question,
+                       delim = "?",
+                       names = c("full_question_1", "element")) |>
+  mutate(element = str_trim(element)) |>
+  group_by(group, phase, response, element) |> 
+  count() |> 
+  group_by(group, phase, element) |> 
+  mutate(total = sum(n),
+         pct = n/total*100,
+         text = paste0(round(pct, 1), "% (", n, ")")) |> 
+  select(-n, -pct, -total) |> 
+  pivot_wider(names_from =  "response",
+              values_from = "text") |> 
+  mutate(phase = case_when(phase == "T1" ~ "Pre-webinar",
+                           phase == "T2" ~ "Post-webinar",
+                           phase == "T3" ~ "Post-reinforcement",
+                           phase == "T4" ~ "Follow up")) |> 
+  select(group, phase, `Not At All`, `Occasionally`, `About Half The Time`, `Most Of The Time`, `Every Time`) |> 
+  arrange(desc(phase), element) |> 
+  View()
 
 # Pupil behaviour - handwashing contexts -------------------------------------
 
@@ -756,7 +1022,7 @@ var_label(elements_data) <- c("phase" ,get_labels(.starts_with = ref, .compare =
 
 p1 <- elements_data |> 
   filter(phase == "T2") |> 
-  mutate(phase = "Post-webinar") |> 
+  mutate(phase = "Post-webinar (n=10)") |> 
   gglikert_stacked(include = starts_with(ref),
                    sort = "none",
                    labels_accuracy = 0.1) + 
@@ -766,7 +1032,7 @@ p1 <- elements_data |>
 
 p2 <- elements_data |> 
   filter(phase == "T3") |> 
-  mutate(phase = "Post-reinforcement") |> 
+  mutate(phase = "Post-reinforcement (n=8)") |> 
   gglikert_stacked(include = starts_with(ref),
                    sort = "none",
                    labels_accuracy = 0.1) + 
@@ -776,7 +1042,7 @@ p2 <- elements_data |>
 
 p3 <- elements_data |> 
   filter(phase == "T4") |> 
-  mutate(phase = "Follow up") |> 
+  mutate(phase = "Follow up (n=6)") |> 
   gglikert_stacked(include = starts_with(ref),
                    labels_accuracy = 0.1) + 
   scale_fill_brewer(palette = "YlGnBu") +
@@ -820,16 +1086,17 @@ elements_data <- all_qs |>
               values_from = "response") |> 
   select(-participant, -likert_scale) |> 
   mutate(across(starts_with("T"), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
-  set_variable_labels(T2 = "Post-webinar",
-                      T3 = "Post-reinforcement",
-                      T4 = "Follow up")
+  set_variable_labels(T2 = "Post-webinar (n=10)",
+                      T3 = "Post-reinforcement (n=8)",
+                      T4 = "Follow up (n=6)")
 
 p1 <- elements_data |> 
   filter(question_code == "freq_context_before_lunch") |> 
   mutate(question_code = "Before Lunch") |> 
   gglikert_stacked(include = starts_with("T"),
                    sort = "none",
-                   labels_accuracy = 0.1) + 
+                   labels_accuracy = 0.1,
+                   y_label_wrap = 12) + 
   scale_fill_brewer(palette = "YlGnBu") +
   facet_wrap(~question_code,
              strip.position = "top")
@@ -839,7 +1106,8 @@ p2 <- elements_data |>
   mutate(question_code = "After Going To The Toilet") |> 
   gglikert_stacked(include = starts_with("T"),
                    sort = "none",
-                   labels_accuracy = 0.1) + 
+                   labels_accuracy = 0.1,
+                   y_label_wrap = 12) + 
   scale_fill_brewer(palette = "YlGnBu") +
   facet_wrap(~question_code,
              strip.position = "top")
@@ -849,7 +1117,8 @@ p3 <- elements_data |>
   mutate(question_code = "After Outside Play") |> 
   gglikert_stacked(include = starts_with("T"),
                    sort = "none",
-                   labels_accuracy = 0.1) + 
+                   labels_accuracy = 0.1,
+                   y_label_wrap = 12) + 
   scale_fill_brewer(palette = "YlGnBu") +
   facet_wrap(~question_code,
              strip.position = "top")
@@ -885,17 +1154,23 @@ all_qs |>
 all_qs |> 
   filter(question_code %in% get_codes(ref)) |> 
   select(-question_code) |> 
+  mutate(phase = "Post-intervention",
+         group = case_when(group == "Teachers/TAs" ~ "Teachers/TAs (n=8)",
+                           group == "Headteachers" ~ "Headteachers (n=5)")) |> 
   pivot_wider(names_from = "group",
               values_from = "response") |> 
   mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
   select(-participant, -full_question, -likert_scale) |> 
   #set_variable_labels(T3 = "Post-reinforcement") |> 
-  gglikert_stacked(include = `Teachers/TAs`:Headteachers,
+  gglikert_stacked(include = `Teachers/TAs (n=8)`:`Headteachers (n=5)`,
            #facet_rows = vars(group),
-           labels_accuracy = 0.1) + 
+           labels_accuracy = 0.1,
+           y_label_wrap = 13) + 
   ggtitle(str_wrap(get_title(ref, "between phases"), 80)) +
   scale_fill_brewer(palette = "YlGnBu") +
-  custom_theming
+  custom_theming +
+  facet_wrap(~phase,
+             strip.position = "right")
 
 
 # Other -------------------------------------------------------------------
@@ -914,8 +1189,10 @@ all_qs |>
   count(response) |> 
   mutate(total = sum(n),
          pct = n/total*100,
-         text = paste0(pct, "% (", n, ")")) |> 
-  select(-n, -total, - pct) |> 
+         text = paste0(pct, "% (", n, ")"),
+         text = case_when(!is.na(text) ~ text,
+                          TRUE ~ "0%")) |> 
+  select(-n, -total, -pct) |> 
   pivot_wider(names_from = "response",
               values_from = "text")
 
