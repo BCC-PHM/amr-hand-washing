@@ -77,4 +77,75 @@ ggplot(attendance_agg) +
                     ymax = uppercl,
                     group = treatment),
                 width = .2,
-                position = position_dodge(0.9))
+                position = position_dodge(0.9)) +
+  theme_light() +
+  scale_fill_manual(values = c("#2c7fb8", "#a1dab4"),
+                    breaks = c("control", "intervention"),
+                    labels = c("Control schools", "Intervention schools"),
+                    name = "") +
+  custom_theming +
+  theme(panel.grid.major.x = element_blank()) +
+  labs(x = "Academic Term 2025-26",
+       y = "Person-days missed per 1,000 person-days",
+       fill = NULL,
+       title = "")
+
+
+# Calculate rate difference and CIs ---------------------------------------
+
+library(ratesci)
+
+ctrl_autumn_pd <- 951225
+ctrl_autumn_pdm <- round(74312.25)
+ctrl_summer_pd <- 657200
+ctrl_summer_pdm <- round(45438.35)
+
+ivn_autumn_pd <- 12300
+ivn_autumn_pdm <- round(838.95)
+ivn_summer_pd <- 8100
+ivn_summer_pdm <- round(494.20)
+
+
+ctrl_scoreci <- scoreci(x1 = ctrl_autumn_pdm,
+        n1 = ctrl_autumn_pd,
+        x2 = ctrl_summer_pdm,
+        n2 = ctrl_summer_pd,
+        distrib = "poi")
+ctrl_rd <- ctrl_scoreci$estimates[2]
+ctrl_lowerci <- ctrl_scoreci$estimates[1]
+ctrl_upperci <- ctrl_scoreci$estimates[3]
+
+ivn_scoreci <- scoreci(x1 = ivn_autumn_pdm,
+                        n1 = ivn_autumn_pd,
+                        x2 = ivn_summer_pdm,
+                        n2 = ivn_summer_pd,
+                        distrib = "poi")
+ivn_rd <- ivn_scoreci$estimates[2]
+ivn_lowerci <- ivn_scoreci$estimates[1]
+ivn_upperci <- ivn_scoreci$estimates[3]
+
+attendance_rd <- data.frame(treatment = c("control", "intervention"),
+           rd = c(ctrl_rd, ivn_rd),
+           lowerci = c(ctrl_lowerci, ivn_lowerci),
+           upperci = c(ctrl_upperci, ivn_upperci))
+
+attendance_rd |> 
+  mutate(rd = rd*1000,
+         lowerci = lowerci*1000,
+         upperci = upperci*1000) |> 
+  ggplot(aes(x = treatment)) +
+  geom_col(aes(y = rd,
+               fill = treatment)) +
+  geom_errorbar(aes(ymin = lowerci,
+                    ymax = upperci),
+                width = 0.2) +
+  theme_light() +
+  scale_fill_manual(values = c("#2c7fb8", "#a1dab4"),
+                    breaks = c("control", "intervention"),
+                    labels = c("Control schools", "Intervention schools"),
+                    name = "") +
+  custom_theming +
+  theme(panel.grid.major.x = element_blank()) +
+  labs(x = "Treatment",
+       y = "Autumn/Summer rate difference per 1,000 person-days",
+       fill = NULL)
