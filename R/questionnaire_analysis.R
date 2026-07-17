@@ -153,8 +153,8 @@ timepoint_labels <- list(
 custom_theming <- theme(legend.position = "bottom",
                         strip.background = element_rect(fill = "black"),
                         strip.text = element_text(colour = "white"),
-                        text = element_text(size = 12),
-                        plot.title = element_text(face="bold", size = 16),
+                        text = element_text(size = 14),
+                        plot.title = element_text(face="bold", size = 18),
                         plot.title.position = "plot")
 
 count_lookup <- all_qs |> 
@@ -688,7 +688,8 @@ elements_data |>
   gglikert_stacked(include = starts_with("element"),
                    sort = "descending",
                    sort_method = "mean",
-                   labels_accuracy = 0.1) + 
+                   labels_accuracy = 0.1,
+                   y_label_wrap = 37) + 
   ggtitle(str_wrap(get_title(ref, "within phase"), 80)) +
   scale_fill_brewer(palette = "YlGnBu") +
   custom_theming +
@@ -742,7 +743,8 @@ elements_data |>
   gglikert_stacked(include = starts_with("element"),
                    sort = "descending",
                    sort_method = "mean",
-                   labels_accuracy = 0.1) + 
+                   labels_accuracy = 0.1,
+                   y_label_wrap = 38) + 
   ggtitle(str_wrap(get_title(ref, "within phase"), 80)) +
   scale_fill_brewer(palette = "YlGnBu") +
   custom_theming +
@@ -791,13 +793,14 @@ elements_data <- all_qs |>
   mutate(across(starts_with("element"), ~ factor(.x, levels = get_likert_scale(ref))))
 
 
-var_label(elements_data) <- c("group",get_labels(.starts_with = ref, .compare = "within phase"))
+var_label(elements_data) <- c("group", get_labels(.starts_with = ref, .compare = "within phase"))
 
 elements_data |> 
   gglikert_stacked(include = starts_with("element"),
                    sort = "descending",
                    sort_method = "mean",
-                   labels_accuracy = 0.1) + 
+                   labels_accuracy = 0.1,
+                   y_label_wrap = 38) + 
   ggtitle(str_wrap(get_title(ref, "within phase"), 80)) +
   scale_fill_brewer(palette = "YlGnBu") +
   custom_theming +
@@ -851,7 +854,8 @@ elements_data |>
   gglikert_stacked(include = starts_with("element"),
                    sort = "descending",
                    sort_method = "median",
-                   labels_accuracy = 0.1) + 
+                   labels_accuracy = 0.1,
+                   y_label_wrap = 38) + 
   ggtitle(str_wrap(get_title(ref, "within phase"), 80)) +
   scale_fill_brewer(palette = "YlGnBu") +
   custom_theming +
@@ -934,7 +938,11 @@ p3 <- elements_data |>
 p1 + p2 + p3 +
   plot_layout(guides = "collect",
               axes = "collect") +
-  plot_annotation(title = str_wrap(get_title(ref, "within phase"), 80)) &
+  plot_annotation(title = str_wrap(get_title(ref, "within phase"), 120)) &
+  custom_theming
+
+p3 +
+  ggtitle(str_wrap(get_title(ref, "within phase"), 80)) +
   custom_theming
 
 # compare single step between phases
@@ -1055,27 +1063,6 @@ p1 + p2 + p3 +
   plot_annotation(title = str_wrap(get_title(ref, "within phase"), 80)) &
   custom_theming
 
-# compare phases, facet by context (staggered)
-all_qs |> 
-  filter(question_code %in% get_codes(ref),
-         group == "Teachers/TAs") |> 
-  select(-group, -full_question) |> 
-  pivot_wider(names_from = "phase",
-              values_from = "response") |> 
-  select(-participant, -likert_scale) |> 
-  mutate(across(starts_with("T"), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
-  set_variable_labels(T2 = "Post-webinar",
-                      T3 = "Post-reinforcement",
-                      T4 = "Follow up") |> 
-  mutate(question_code = case_when(question_code == "freq_context_before_lunch" ~ "Before Lunch",
-                                   question_code == "freq_context_after_toilet" ~ "After Going To The Toilet",
-                                   question_code == "freq_context_after_play" ~ "After Outside Play")) |> 
-  gglikert(include = starts_with("T", ignore.case = F),
-           facet_cols = vars(question_code),
-           labels_accuracy = 0.1) + 
-  ggtitle(str_wrap(get_title(ref, "within phase"), 80)) +
-  scale_fill_brewer(palette = "YlGnBu") +
-  custom_theming
 
 # compare phases, facet by context (stacked)
 elements_data <- all_qs |> 
@@ -1126,29 +1113,17 @@ p3 <- elements_data |>
 p1 + p2 + p3 +
   plot_layout(guides = "collect",
               axes = "collect") +
-  plot_annotation(title = str_wrap(get_title(ref, "within phase"), 80)) &
+  plot_annotation(title = str_wrap(get_title(ref, "within phase"), 120)) &
+  custom_theming
+
+p3 +
+  ggtitle(str_wrap(get_title(ref, "within phase"), 80)) +
   custom_theming
 
 
 # Extent to which project met expectations  ------------------------------
 
 ref <- "expectations_met"
-
-# gglikert() with faceting
-all_qs |> 
-  filter(question_code %in% get_codes(ref)) |> 
-  select(-question_code) |> 
-  pivot_wider(names_from = "group",
-              values_from = "response") |> 
-  mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
-  select(-participant, -full_question, -likert_scale) |> 
-  #set_variable_labels(T3 = "Post-reinforcement") |> 
-  gglikert(include = `Teachers/TAs`:Headteachers,
-           #facet_rows = vars(group),
-           labels_accuracy = 0.1) + 
-  ggtitle(str_wrap(get_title(ref, "between phases"), 80)) +
-  scale_fill_brewer(palette = "YlGnBu") +
-  custom_theming
 
 # gglikert_stacked()
 all_qs |> 
@@ -1172,6 +1147,65 @@ all_qs |>
   facet_wrap(~phase,
              strip.position = "right")
 
+# Extent to which project was effective in embedding handwashing  ------------------------------
+
+ref <- "project_effective"
+
+# gglikert_stacked()
+all_qs |> 
+  filter(question_code %in% get_codes(ref)) |> 
+  select(-question_code) |> 
+  mutate(phase = "Post-intervention",
+         group = case_when(group == "Teachers/TAs" ~ "Teachers/TAs (n=6)",
+                           group == "Headteachers" ~ "Headteachers (n=2)")) |> 
+  pivot_wider(names_from = "group",
+              values_from = "response") |> 
+  mutate(across(starts_with("T", ignore.case = F), ~ factor(.x, levels = get_likert_scale(ref)))) |> 
+  select(-participant, -full_question, -likert_scale) |> 
+  #set_variable_labels(T3 = "Post-reinforcement") |> 
+  gglikert_stacked(include = `Teachers/TAs (n=6)`:`Headteachers (n=2)`,
+                   #facet_rows = vars(group),
+                   labels_accuracy = 0.1,
+                   y_label_wrap = 13) + 
+  ggtitle(str_wrap(get_title(ref, "between phases"), 80)) +
+  scale_fill_brewer(palette = "YlGnBu") +
+  custom_theming +
+  facet_wrap(~phase,
+             strip.position = "right")
+
+
+# Continue using elements -------------------------------------------------
+
+ref <- "continue_using"
+
+all_qs |> 
+  filter(question_code %in% get_codes(ref)) |> 
+  separate_longer_delim(cols = response,
+                        delim = ";") |> 
+  filter(response != "") |> 
+  mutate(response = str_trim(response),
+         response = str_to_sentence(response),
+         response = case_when(response == "Setting reminders for you to prompt pupils handwashing" ~ "Setting reminders to prompt pupils handwashing",
+                              .default = response)) |> 
+  group_by(phase, question_code) |> 
+  count(response) |> 
+  arrange(n) |> 
+  mutate(response = str_wrap(response, 38),
+         response = fct_inorder(response),
+         phase = case_when(phase == "T3" ~ "Post-reinforcement (n=8)",
+                           phase == "T4" ~ "Follow up (n=6)"),
+         phase = factor(phase,
+                        levels = c("Post-reinforcement (n=8)",
+                                   "Follow up (n=6)"))) |> 
+  ggplot(aes(x = n,
+             y = response,
+             fill = phase)) +
+  geom_col() +
+  facet_wrap(~phase) +
+  theme_light() +
+  ggtitle(str_wrap(get_title(ref, "between phases"), 80)) +
+  scale_fill_manual(values = c("#2c7fb8", "#a1dab4")) +
+  custom_theming
 
 # Other -------------------------------------------------------------------
 
